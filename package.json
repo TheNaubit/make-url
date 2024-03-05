@@ -15,7 +15,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "rimraf dist && tsc && vite build",
+    "build": "rimraf dist && npm run test:run && tsc && vite build",
     "test": "vitest",
     "test:run": "vitest run",
     "coverage": "vitest run --coverage",
