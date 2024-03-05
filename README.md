@@ -39,6 +39,8 @@ npm install --save @nauverse/make-url
 
 ### 2. Checking this example of use:
 ~~~ts
+import { makeURL } from "@nauverse/make-url";
+
 makeURL("https://api.example.com/", "/:id/:param2/:id///", {
   queryParams: {
     id: 1,
