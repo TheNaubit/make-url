@@ -1,3 +1,12 @@
+## [1.1.4](https://github.com/TheNaubit/make-url/compare/v1.1.3...v1.1.4) (2024-03-05)
+
+
+### Bug Fixes
+
+* update npm publish command to include --access public ([f17ee59](https://github.com/TheNaubit/make-url/commit/f17ee5980a4e3fdc311153fd8f3770637bf3a8e9))
+
+
+
 ## [1.1.3](https://github.com/TheNaubit/make-url/compare/v1.1.2...v1.1.3) (2024-03-05)
 
 
