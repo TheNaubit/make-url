@@ -1,31 +1,13 @@
-## [1.1.4](https://github.com/TheNaubit/make-url/compare/v1.1.3...v1.1.4) (2024-03-05)
+# [1.2.0](https://github.com/TheNaubit/make-url/compare/v1.1.4...v1.2.0) (2024-03-05)
 
 
-### Bug Fixes
+### Features
 
-* update npm publish command to include --access public ([f17ee59](https://github.com/TheNaubit/make-url/commit/f17ee5980a4e3fdc311153fd8f3770637bf3a8e9))
-
-
-
-## [1.1.3](https://github.com/TheNaubit/make-url/compare/v1.1.2...v1.1.3) (2024-03-05)
-
-
-### Bug Fixes
-
-* updated package name ([bb5f1d3](https://github.com/TheNaubit/make-url/commit/bb5f1d38fe7e9bbc0d8909d93ca63fa0b591bd54))
+* fixed some bugs and update readme ([d5cd50f](https://github.com/TheNaubit/make-url/commit/d5cd50f87f8afcf5f0dea586e909cb70491c82ac))
 
 
 
-## [1.1.2](https://github.com/TheNaubit/make-url/compare/v1.1.0...v1.1.2) (2024-03-05)
-
-
-### Bug Fixes
-
-* updated package version ([baff34d](https://github.com/TheNaubit/make-url/commit/baff34d953830e05216018ff0f09e6316811d99c))
-
-
-
-# [1.1.0](https://github.com/TheNaubit/make-url/compare/e4a83c57e56e18ec0cb25c59aa3812ff6f39f843...v1.1.0) (2024-03-05)
+## [1.1.4](https://github.com/TheNaubit/make-url/compare/e4a83c57e56e18ec0cb25c59aa3812ff6f39f843...v1.1.4) (2024-03-05)
 
 
 ### Bug Fixes
@@ -37,6 +19,9 @@
 * fixed readme ([b748eb7](https://github.com/TheNaubit/make-url/commit/b748eb74c6fc32e1de24c5c3ba333e5230e7c25e))
 * removed codeql ([178794b](https://github.com/TheNaubit/make-url/commit/178794b2d307b960f12864f003f78463a351106b))
 * removed empty license ([7864424](https://github.com/TheNaubit/make-url/commit/7864424a91403a617438403b4dc3782ec00de609))
+* update npm publish command to include --access public ([f17ee59](https://github.com/TheNaubit/make-url/commit/f17ee5980a4e3fdc311153fd8f3770637bf3a8e9))
+* updated package name ([bb5f1d3](https://github.com/TheNaubit/make-url/commit/bb5f1d38fe7e9bbc0d8909d93ca63fa0b591bd54))
+* updated package version ([baff34d](https://github.com/TheNaubit/make-url/commit/baff34d953830e05216018ff0f09e6316811d99c))
 
 
 ### Features
