@@ -1,3 +1,12 @@
+## [1.6.1](https://github.com/TheNaubit/make-url/compare/v1.6.0...v1.6.1) (2024-03-05)
+
+
+### Bug Fixes
+
+* fix formatting of dependencies in README.md ([58427b6](https://github.com/TheNaubit/make-url/commit/58427b6f17a6075ea3f2be01fe5ebbe9ba6386ce))
+
+
+
 # [1.6.0](https://github.com/TheNaubit/make-url/compare/v1.5.0...v1.6.0) (2024-03-05)
 
 
@@ -32,15 +41,6 @@
 ### Bug Fixes
 
 * update package.json exports ([4410e29](https://github.com/TheNaubit/make-url/commit/4410e290460c8c2f0c36829a6cc9b250d291853b))
-
-
-
-# [1.3.0](https://github.com/TheNaubit/make-url/compare/v1.2.0...v1.3.0) (2024-03-05)
-
-
-### Features
-
-* add tl;dr section to README.md ([aa641ba](https://github.com/TheNaubit/make-url/commit/aa641bab3cb477929d107c864fa9775c054154e2))
 
 
 
