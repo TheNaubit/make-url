@@ -1,3 +1,12 @@
+## [1.1.3](https://github.com/TheNaubit/make-url/compare/v1.1.2...v1.1.3) (2024-03-05)
+
+
+### Bug Fixes
+
+* updated package name ([bb5f1d3](https://github.com/TheNaubit/make-url/commit/bb5f1d38fe7e9bbc0d8909d93ca63fa0b591bd54))
+
+
+
 ## [1.1.2](https://github.com/TheNaubit/make-url/compare/v1.1.0...v1.1.2) (2024-03-05)
 
 
