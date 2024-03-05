@@ -78,7 +78,7 @@ Feel free to test and explore and if later on you need more guidance, read the w
   </thead>
   <tbody>
     <tr>
-      <td>0️⃣ Zero dependencies</td>
+      <td>0️⃣ ‎ Zero dependencies</td>
     </tr>
     <tr>
       <td>👌 1kB <a href="https://bundlephobia.com/package/@nauverse/make-url@latest">minified and gzipped</a></td>
@@ -96,7 +96,7 @@ Feel free to test and explore and if later on you need more guidance, read the w
       <td>❓ Support for query parameters (add them in any format and they will be safely escaped and added)</td>
     </tr>
     <tr>
-      <td>#️⃣ Support for hash parameter</td>
+      <td>#️⃣ ‎ Support for hash parameter</td>
     </tr>
     <tr>
       <td>🤓 Smart trailing slash handling (and fully configurable)</td>
