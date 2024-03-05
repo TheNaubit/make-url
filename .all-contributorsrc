@@ -1,4 +1,23 @@
 {
   "projectName": "make-url",
-  "projectOwner": "TheNaubit"
+  "projectOwner": "TheNaubit",
+  "files": [
+    "README.md"
+  ],
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributorsPerLine": 7,
+  "contributors": [
+    {
+      "login": "TheNaubit",
+      "name": "Al | Naucode",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22015497?v=4",
+      "profile": "https://nauverse.com",
+      "contributions": [
+        "bug",
+        "code",
+        "doc"
+      ]
+    }
+  ]
 }
