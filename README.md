@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="docs/cat.svg" alt="Markdownify">
+  <!-- <img src="docs/cat.svg" alt="Markdownify"> -->
   <br>
   make-url
   <br>
@@ -91,7 +91,7 @@ Happy hacking!
 ## Contributors ✨
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-19-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/github/all-contributors/TheNaubit/make-url?style=flat-square)](#contributors)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
