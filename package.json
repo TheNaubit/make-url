@@ -19,7 +19,12 @@
     "builder",
     "querystring",
     "url-builder",
-    "query-string"
+    "query-string",
+    "uri",
+    "build",
+    "concat",
+    "concatenate",
+    "urlcat"
   ],
   "version": "1.5.0",
   "type": "module",

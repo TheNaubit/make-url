@@ -70,29 +70,60 @@ Feel free to test and explore and if later on you need more guidance, read the w
 
 ### Features
 
-<center>
   <table>
   <thead>
     <tr>
-      <th align="center"><strong>v1</strong></th>
+      <th><strong>v1</strong></th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td align="center">Latest version</td>
+      <td>0️⃣ Zero dependencies</td>
     </tr>
     <tr>
-      <td align="center">No dependencies</td>
+      <td>👌 1kB <a href="https://bundlephobia.com/package/@nauverse/make-url@latest">minified and gzipped</a></td>
     </tr>
     <tr>
-      <td align="center">1kB <a href="https://bundlephobia.com/package/@nauverse/make-url@latest">minified and gzipped</a></td>
+      <td>✍️ TypeScript types provided</td>
     </tr>
     <tr>
-      <td align="center" colspan="2">TypeScript types provided</td>
+      <td>🛟 Safe escaping everywhere</td>
+    </tr>
+    <tr>
+      <td>🧠 Smart concatenating</td>
+    </tr>
+    <tr>
+      <td>❓ Support for query parameters (add them in any format and they will be safely escaped and added)</td>
+    </tr>
+    <tr>
+      <td>#️⃣ Support for hash parameter</td>
+    </tr>
+    <tr>
+      <td>🤓 Smart trailing slash handling (and fully configurable)</td>
+    </tr>
+    <tr>
+      <td>🌍 Global default config option (if you use always the same settings, you can make it constant, instead of having to specify them on each function call)</td>
+    </tr>
+    <tr>
+      <td>🔗 URL type detection (if it is a full URL, a relative URL, an absolute URL...)</td>
+    </tr>
+    <tr>
+      <td>🚔 Protocol enforcing settings (plus a smart mode so it handles it for you)</td>
+    </tr>
+    <tr>
+      <td>🎛️ Enable or disable removing extra slashes (so it supports RFC 3986)</td>
+    </tr>
+    <tr>
+      <td>📋 Query parameters support arrays, with three modes: stringify, repeat key and comma-separated</td>
+    </tr>
+    <tr>
+      <td>🧘 It also supports the relative protocol (`//example.com/my-page`)</td>
+    </tr>
+    <tr>
+      <td>✅ Production ready</td>
     </tr>
   </tbody>
   </table>
-</center>
 
 ## Why?
 
@@ -151,22 +182,6 @@ function getUserPosts(id, limit, offset) {
   // send HTTP request
 }
 ~~~
-
-So, what does this library offer?
-- Escaping all parameters
-- Concatenating all parts (there will always be exactly one <kbd>/</kbd> and <kbd>?</kbd> character between them)
-- Support for query parameters (you can pass any value as a query parameter key and it will be added as a valid query parameter to the URL)
-- Support for hash parameters
-- Support for URL parameters (with the `:<query key>` template in the URL)
-- Fully type-safe
-- Trailing slash handling (you can choose if always add or remove it)
-- Global default config option (if you use always the same settings, you can make it constant, instead of having to specify them on each function call)
-- URL type detection (if it is a full URL, a relative URL, an absolute URL...)
-- Protocol enforcing
-- Enable or disable removing extra slashes
-- Production-ready
-- Zero dependencies
-
 
 ## How?
 
@@ -282,6 +297,68 @@ makeURL("https://example.com", "//test///a", {
 });
 // https://example.com/test/a
 ~~~
+
+### `arraySerializer`
+> By default, it is set to `repeat`
+
+Arrays are a special kind of data, specially when sending them as query parameters to the server. There are many ways to handle them and we try to support all of them.
+
+The default mode used is `repeat` but you can change it in any function call you need it or globally by using the `setMakeURLDefaultConfig` function.
+
+There are three possible values: `repeat`, `comma` and `stringify`. Each of them specify how to handle the arrays. Let's see some examples:
+#### makeURL with `arraySerializer: 'repeat'`
+~~~ts
+makeURL("https://example.com", "/test", {
+  queryParams: {
+    arr: ['a', 'b', 'c']
+  },
+  config: {
+    arraySerializer: 'repeat'
+  }
+});
+// https://example.com/test?arr=a&arr=b&arr=c
+~~~
+
+#### makeURL with `arraySerializer: 'stringify'`
+~~~ts
+makeURL("https://example.com", "/test", {
+  queryParams: {
+    arr: ['a', 'b', 'c']
+  },
+  config: {
+    arraySerializer: 'repeat'
+  }
+});
+// https://example.com/test?arr=%5B%22a%22%2C%22b%22%2C%22c%22%5D
+~~~
+
+#### makeURL with `arraySerializer: 'comma'`
+~~~ts
+makeURL("https://example.com", "/test", {
+  queryParams: {
+    arr: ['a', 'b', 'c']
+  },
+  config: {
+    arraySerializer: 'comma'
+  }
+});
+// https://example.com/test?arr=a%2Cb%2Cc
+~~~
+
+> Important: Arrays are not supported for URL variables (no matter the `mode` you use), so they won't be replaced there but added as a query parameter. See one example below:
+#### makeURL with `arraySerializer: 'comma'` with array as URL variable
+~~~ts
+makeURL("https://example.com", "/test/:arr", {
+  queryParams: {
+    arr: ['a', 'b', 'c']
+  },
+  config: {
+    arraySerializer: 'comma'
+  }
+});
+// https://example.com/test/:arr?arr=a%2Cb%2Cc <- Notice that we can not replace arrays in URL variables
+~~~
+
 
 ### `trailingSlash`
 > By default, it is set to `add`
@@ -698,6 +775,43 @@ getMakeURLDefaultConfig();
 }
 */
 ~~~
+---
+### About the relative protocol
+Sometimes you might want to build URLs that use the relative protocol (`//`) so you obtain URLs like `//example.com/my/path?test=1`.
+
+Luckily, this module supports building them, just keep in mind these URLs, like the relative and the absolute ones; are <b>not compatible</b> with `strict: true`.
+
+If you have `strict: false`, you can do use them. Here you have some examples:
+#### makeURL with `strict: false` and a relative protocol URL
+~~~ts
+makeURL("//example.com", "test/a", {
+  config: {
+    strict: false
+  }
+});
+// //example.com/test/a
+~~~
+
+#### makeURL with `strict: false` and a relative protocol URL but an invalid domain
+~~~ts
+makeURL("//example", "test/a", {
+  config: {
+    strict: false
+  }
+});
+// /example/test/a <- It is transformed to an absolute URL
+~~~
+
+#### makeURL with `strict: true` and a relative protocol URL
+~~~ts
+makeURL("//example.com", "test/a", {
+  config: {
+    strict: true
+  }
+});
+// Throws an error
+~~~
+
 ---
 ### Full examples
 To finish with this "guide", I want to provide some examples combining several of the explained settings:
