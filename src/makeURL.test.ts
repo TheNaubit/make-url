@@ -473,6 +473,191 @@ describe("makeURL", () => {
     const url = makeURL("example.com", "/blog", "post/1");
     expect(url).toBe("http://example.com/blog/post/1");
   });
+
+  it("should encode unsafe characters in the URL", () => {
+    // Set the configuration object to some default values
+    setMakeURLDefaultConfig({
+      forceProtocol: "auto",
+      trailingSlash: "remove",
+      strict: true,
+      allowEmptyPathSegments: false
+    });
+    // https://example.com/blog/pÖ&st/1/about me/*Æ?testQÉr/y=%ª`B
+    const url = makeURL(
+      "https://example.com",
+      "blog",
+      "pÖ&st/1",
+      "about me",
+      "/:id/",
+      {
+        queryParams: {
+          id: "*Æ",
+          "testQÉr/y": "%ª`B"
+        },
+        hashParam: "Üº&%·3"
+      }
+    );
+    expect(url).toBe(
+      "https://example.com/blog/p%C3%96%26st/1/about%20me/*%C3%86?testQ%C3%89r%2Fy=%25%C2%AA%60B#%C3%9C%C2%BA%26%25%C2%B73"
+    );
+  });
+
+  it("should serialize the query parameters as a JSON serialized string if the arraySerializer is set to `stringify`", () => {
+    // Set the configuration object to some default values
+    setMakeURLDefaultConfig({
+      forceProtocol: "auto",
+      trailingSlash: "remove",
+      strict: true,
+      allowEmptyPathSegments: false,
+      arraySerializer: "stringify"
+    });
+
+    const url = makeURL("https://example.com", {
+      queryParams: {
+        key: "value",
+        arr: ["item1", "item2"]
+      }
+    });
+    expect(url).toBe(
+      "https://example.com?key=value&arr=%5B%22item1%22%2C%22item2%22%5D"
+    );
+  });
+
+  it("should serialize the query parameters as a JSON serialized string if the arraySerializer is set to `stringify` and the array is empty", () => {
+    // Set the configuration object to some default values
+    setMakeURLDefaultConfig({
+      forceProtocol: "auto",
+      trailingSlash: "remove",
+      strict: true,
+      allowEmptyPathSegments: false,
+      arraySerializer: "stringify"
+    });
+
+    const url = makeURL("https://example.com", {
+      queryParams: {
+        key: "value",
+        arr: []
+      }
+    });
+
+    expect(url).toBe("https://example.com?key=value&arr=%5B%5D");
+  });
+
+  it("should repeat the query parameters as a string if the arraySerializer is set to `repeat`", () => {
+    // Set the configuration object to some default values
+    setMakeURLDefaultConfig({
+      forceProtocol: "auto",
+      trailingSlash: "remove",
+      strict: true,
+      allowEmptyPathSegments: false,
+      arraySerializer: "repeat"
+    });
+
+    const url = makeURL("https://example.com", {
+      queryParams: {
+        key: "value",
+        arr: ["item1", "item2"]
+      }
+    });
+    expect(url).toBe("https://example.com?key=value&arr=item1&arr=item2");
+  });
+
+  it("should not add the query parameters as a string if the arraySerializer is set to `repeat` and the array is empty", () => {
+    // Set the configuration object to some default values
+    setMakeURLDefaultConfig({
+      forceProtocol: "auto",
+      trailingSlash: "remove",
+      strict: true,
+      allowEmptyPathSegments: false,
+      arraySerializer: "repeat"
+    });
+
+    const url = makeURL("https://example.com", {
+      queryParams: {
+        key: "value",
+        arr: []
+      }
+    });
+    expect(url).toBe("https://example.com?key=value");
+  });
+
+  it("should serialize the query parameters as a comma separated string if the arraySerializer is set to `comma`", () => {
+    // Set the configuration object to some default values
+    setMakeURLDefaultConfig({
+      forceProtocol: "auto",
+      trailingSlash: "remove",
+      strict: true,
+      allowEmptyPathSegments: false,
+      arraySerializer: "comma"
+    });
+
+    const url = makeURL("https://example.com", {
+      queryParams: {
+        key: "value",
+        arr: ["item1", "item2"]
+      }
+    });
+    expect(url).toBe("https://example.com?key=value&arr=item1%2Citem2");
+  });
+
+  it("should serialize the query parameters as an empty key if the arraySerializer is set to `comma` and the array is empty", () => {
+    // Set the configuration object to some default values
+    setMakeURLDefaultConfig({
+      forceProtocol: "auto",
+      trailingSlash: "remove",
+      strict: true,
+      allowEmptyPathSegments: false,
+      arraySerializer: "comma"
+    });
+
+    const url = makeURL("https://example.com", {
+      queryParams: {
+        key: "value",
+        arr: []
+      }
+    });
+    expect(url).toBe("https://example.com?key=value&arr=");
+  });
+
+  it("should support the relative protocol `//` when strict is set to false", () => {
+    // Set the configuration object to some default values
+    setMakeURLDefaultConfig({
+      forceProtocol: "auto",
+      trailingSlash: "remove",
+      strict: false,
+      allowEmptyPathSegments: false
+    });
+
+    const url = makeURL("//example.com", "blog", "post/1");
+    expect(url).toBe("//example.com/blog/post/1");
+  });
+
+  it("should treat the relative protocol `//` as an absolute path when strict is set to false but the URL does not start with a domain", () => {
+    // Set the configuration object to some default values
+    setMakeURLDefaultConfig({
+      forceProtocol: "auto",
+      trailingSlash: "remove",
+      strict: false,
+      allowEmptyPathSegments: false
+    });
+
+    const url = makeURL("//example", "blog", "post/1");
+    expect(url).toBe("/example/blog/post/1");
+  });
+
+  it("should not support the relative protocol `//` when strict is set to true", () => {
+    // Set the configuration object to some default values
+    setMakeURLDefaultConfig({
+      forceProtocol: "auto",
+      trailingSlash: "remove",
+      strict: true,
+      allowEmptyPathSegments: false
+    });
+
+    expect(() => {
+      makeURL("//example.com", "blog", "post/1");
+    }).toThrow("The generated URL is not valid: //example.com/blog/post/1");
+  });
 });
 
 describe("setMakeURLDefaultConfig", () => {

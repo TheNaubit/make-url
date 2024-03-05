@@ -3,6 +3,7 @@ export interface IConfig {
   trailingSlash: "add" | "remove";
   strict: boolean;
   allowEmptyPathSegments: boolean;
+  arraySerializer: "stringify" | "repeat" | "comma";
 }
 
 export interface IParams<T> {
