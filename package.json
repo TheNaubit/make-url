@@ -31,8 +31,14 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/make-url.js",
-      "require": "./dist/make-url.umd.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/make-url.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/make-url.umd.cjs"
+      }
     }
   },
   "files": [
