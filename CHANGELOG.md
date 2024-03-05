@@ -1,3 +1,12 @@
+## [1.3.1](https://github.com/TheNaubit/make-url/compare/v1.3.0...v1.3.1) (2024-03-05)
+
+
+### Bug Fixes
+
+* update package.json exports ([4410e29](https://github.com/TheNaubit/make-url/commit/4410e290460c8c2f0c36829a6cc9b250d291853b))
+
+
+
 # [1.3.0](https://github.com/TheNaubit/make-url/compare/v1.2.0...v1.3.0) (2024-03-05)
 
 
