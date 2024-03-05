@@ -23,10 +23,36 @@
   <a href="#why">Why?</a> •
   <a href="#how">How?</a> •
   <a href="#typescript">TypeScript</a> •
+  <a href="#guide-and-examples">Guide and examples</a> •
   <a href="#api">API</a> •
   <a href="#help">Help</a> •
   <a href="#contribute">Contribute</a>
 </p>
+
+## tl;dr
+If you just want to try and you don't want to read this guide right now (although you should in the future if you decide to use the library), you can start quickly by:
+
+### 1. Installing the dependency:
+```bash
+npm install --save @nauverse/make-url
+```
+
+### 2. Checking this example of use:
+~~~ts
+makeURL("https://api.example.com/", "/:id/:param2/:id///", {
+  queryParams: {
+    id: 1,
+    param2: "678"
+  }
+});
+// https://api.example.com/1/678/1
+~~~
+> I added too many slashes intentionally to showcase they can be removed automatically (you also have an option to disable that)
+
+If you want to see more examples, jump to [here](#full-examples).
+
+### 3. You are done! 🪄
+Feel free to test and explore and if later on you need more guidance, read the whole guide and ask in the GitHub repo.
 
 ## What?
 
