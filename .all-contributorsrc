@@ -18,7 +18,8 @@
         "code",
         "doc",
         "maintenance",
-        "test"
+        "test",
+        "infra"
       ]
     }
   ]
