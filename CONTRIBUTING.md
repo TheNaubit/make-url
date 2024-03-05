@@ -6,7 +6,7 @@ Contributions of any kind (pull requests, bug reports, feature requests, documen
 
 Building the project should be quick and easy. If it isn't, it's the maintainer's fault. Please report any problems with building in a GitHub issue.
 
-You need to have a reasonably recent version of node.js to build *urlcat*. My node version is 18.0.0 and npm version 8.6.0.
+You need to have a reasonably recent version of node.js to build *make-url*. My node version is 18.0.0 and npm version 8.6.0.
 
 First, clone the git repository:
 
@@ -14,7 +14,7 @@ First, clone the git repository:
 git clone git@github.com:TheNaubit/make-url.git
 ```
 
-Then switch to the newly created urlcat directory and install the dependencies:
+Then switch to the newly created make-url directory and install the dependencies:
 
 ```
 cd make-url
