@@ -6,7 +6,7 @@
   "module": "./dist/make-url.js",
   "types": "./dist/index.d.ts",
   "engines": {
-    "node": ">=10.0.0"
+    "node": ">=18.0.0"
   },
   "exports": {
     ".": {
@@ -18,7 +18,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "rimraf dist && npm run test:run && tsc && vite build",
+    "build": "rimraf dist tsc && vite build",
     "test": "vitest",
     "test:run": "vitest run",
     "coverage": "vitest run --coverage",
