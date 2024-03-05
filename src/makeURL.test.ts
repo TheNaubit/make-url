@@ -64,7 +64,7 @@ describe("makeURL", () => {
     expect(url).toBe("https://example.com?key=value");
   });
 
-  it("should generate a valid URL with trailing slash containing hash parameters", () => {
+  it("should generate a valid URL with trailing slash containing a hash parameter", () => {
     // Set the configuration object to some default values
     setMakeURLDefaultConfig({
       forceProtocol: "auto",
@@ -74,12 +74,12 @@ describe("makeURL", () => {
     });
 
     const url = makeURL("https://example.com", {
-      hashParams: { section: "about" }
+      hashParam: "about"
     });
-    expect(url).toBe("https://example.com/#section=about");
+    expect(url).toBe("https://example.com/#about");
   });
 
-  it("should generate a valid URL without trailing slash containing hash parameters", () => {
+  it("should generate a valid URL without trailing slash containing a hash parameter", () => {
     // Set the configuration object to some default values
     setMakeURLDefaultConfig({
       forceProtocol: "auto",
@@ -89,9 +89,9 @@ describe("makeURL", () => {
     });
 
     const url = makeURL("https://example.com", {
-      hashParams: { section: "about" }
+      hashParam: "about"
     });
-    expect(url).toBe("https://example.com#section=about");
+    expect(url).toBe("https://example.com#about");
   });
 
   it("should throw an error if no params are provided", () => {

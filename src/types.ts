@@ -7,6 +7,6 @@ export interface IConfig {
 
 export interface IParams<T> {
   queryParams: Record<string, unknown>;
-  hashParams: Record<string, string>;
+  hashParam: string;
   config: T;
 }

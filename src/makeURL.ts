@@ -3,13 +3,13 @@ import type { IParams, IConfig } from "./types";
 export const BASE_DEFAULT_MAKE_URL_CONFIG: IConfig = {
   forceProtocol: "auto",
   trailingSlash: "add",
-  strict: true,
+  strict: false,
   allowEmptyPathSegments: false
 };
 
 const DEFAULT_PARAMS: IParams<IConfig> = {
   queryParams: {},
-  hashParams: {},
+  hashParam: "",
   config: BASE_DEFAULT_MAKE_URL_CONFIG
 };
 
@@ -218,11 +218,10 @@ export default function makeURL(
   }
 
   // Now we have to add the hash params to the URL
-  const hashParamsToAdd = new URLSearchParams(safeParams.hashParams).toString();
-
   // Add the hash params to the URL if there are any
-  if (hashParamsToAdd) {
-    url += `#${hashParamsToAdd}`;
+  const safeHashParamValue: string = safeParams.hashParam.trim();
+  if (safeHashParamValue !== "") {
+    url += `#${encodeURIComponent(safeHashParamValue)}`;
   }
 
   // Finally, validate if the URL is valid (only if the strict mode is enabled)
