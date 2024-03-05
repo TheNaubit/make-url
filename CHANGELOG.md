@@ -1,3 +1,12 @@
+# [1.4.0](https://github.com/TheNaubit/make-url/compare/v1.3.1...v1.4.0) (2024-03-05)
+
+
+### Features
+
+* updated readme with better example ([e020530](https://github.com/TheNaubit/make-url/commit/e020530ec3e1bebbac91bde28e5c9436b3a5c5ec))
+
+
+
 ## [1.3.1](https://github.com/TheNaubit/make-url/compare/v1.3.0...v1.3.1) (2024-03-05)
 
 
