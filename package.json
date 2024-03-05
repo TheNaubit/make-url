@@ -5,6 +5,9 @@
   "main": "./dist/make-url.umd.cjs",
   "module": "./dist/make-url.js",
   "types": "./dist/index.d.ts",
+  "engines": {
+    "node": ">=10.0.0"
+  },
   "exports": {
     ".": {
       "import": "./dist/make-url.js",
