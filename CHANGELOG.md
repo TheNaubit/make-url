@@ -1,3 +1,13 @@
+# [1.6.0](https://github.com/TheNaubit/make-url/compare/v1.5.0...v1.6.0) (2024-03-05)
+
+
+### Features
+
+* add arraySerializer option to IConfig interface and implement its functionality ([93ace6c](https://github.com/TheNaubit/make-url/commit/93ace6c961e01b57227358742f9e7384f0d811c6))
+* update README.md and package.json ([100e0ff](https://github.com/TheNaubit/make-url/commit/100e0ff517c73cc039865b24ec39b51d703317aa))
+
+
+
 # [1.5.0](https://github.com/TheNaubit/make-url/compare/v1.4.0...v1.5.0) (2024-03-05)
 
 
@@ -31,15 +41,6 @@
 ### Features
 
 * add tl;dr section to README.md ([aa641ba](https://github.com/TheNaubit/make-url/commit/aa641bab3cb477929d107c864fa9775c054154e2))
-
-
-
-# [1.2.0](https://github.com/TheNaubit/make-url/compare/v1.1.4...v1.2.0) (2024-03-05)
-
-
-### Features
-
-* fixed some bugs and update readme ([d5cd50f](https://github.com/TheNaubit/make-url/commit/d5cd50f87f8afcf5f0dea586e909cb70491c82ac))
 
 
 
