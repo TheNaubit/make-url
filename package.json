@@ -21,7 +21,7 @@
     "url-builder",
     "query-string"
   ],
-  "version": "1.2.0",
+  "version": "1.3.0",
   "type": "module",
   "main": "./dist/make-url.umd.cjs",
   "module": "./dist/make-url.js",

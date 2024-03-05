@@ -1,3 +1,12 @@
+# [1.3.0](https://github.com/TheNaubit/make-url/compare/v1.2.0...v1.3.0) (2024-03-05)
+
+
+### Features
+
+* add tl;dr section to README.md ([aa641ba](https://github.com/TheNaubit/make-url/commit/aa641bab3cb477929d107c864fa9775c054154e2))
+
+
+
 # [1.2.0](https://github.com/TheNaubit/make-url/compare/v1.1.4...v1.2.0) (2024-03-05)
 
 
