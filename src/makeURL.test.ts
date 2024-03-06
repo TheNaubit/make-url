@@ -44,7 +44,7 @@ describe("makeURL", () => {
     });
 
     const url = makeURL("https://example.com", {
-      queryParams: { key: "value" }
+      params: { key: "value" }
     });
     expect(url).toBe("https://example.com/?key=value");
   });
@@ -59,7 +59,7 @@ describe("makeURL", () => {
     });
 
     const url = makeURL("https://example.com", {
-      queryParams: { key: "value" }
+      params: { key: "value" }
     });
     expect(url).toBe("https://example.com?key=value");
   });
@@ -74,7 +74,7 @@ describe("makeURL", () => {
     });
 
     const url = makeURL("https://example.com", {
-      hashParam: "about"
+      hash: "about"
     });
     expect(url).toBe("https://example.com/#about");
   });
@@ -89,7 +89,7 @@ describe("makeURL", () => {
     });
 
     const url = makeURL("https://example.com", {
-      hashParam: "about"
+      hash: "about"
     });
     expect(url).toBe("https://example.com#about");
   });
@@ -103,7 +103,7 @@ describe("makeURL", () => {
   it("should throw an error if no string params are provided", () => {
     expect(() => {
       makeURL({
-        queryParams: {
+        params: {
           key: "value"
         }
       });
@@ -114,7 +114,7 @@ describe("makeURL", () => {
     expect(() => {
       makeURL(
         {
-          queryParams: {
+          params: {
             key: "value"
           }
         },
@@ -128,7 +128,7 @@ describe("makeURL", () => {
       makeURL(
         "example.com",
         {
-          queryParams: {
+          params: {
             key: "value"
           }
         },
@@ -490,11 +490,11 @@ describe("makeURL", () => {
       "about me",
       "/:id/",
       {
-        queryParams: {
+        params: {
           id: "*Æ",
           "testQÉr/y": "%ª`B"
         },
-        hashParam: "Üº&%·3"
+        hash: "Üº&%·3"
       }
     );
     expect(url).toBe(
@@ -513,7 +513,7 @@ describe("makeURL", () => {
     });
 
     const url = makeURL("https://example.com", {
-      queryParams: {
+      params: {
         key: "value",
         arr: ["item1", "item2"]
       }
@@ -534,7 +534,7 @@ describe("makeURL", () => {
     });
 
     const url = makeURL("https://example.com", {
-      queryParams: {
+      params: {
         key: "value",
         arr: []
       }
@@ -554,7 +554,7 @@ describe("makeURL", () => {
     });
 
     const url = makeURL("https://example.com", {
-      queryParams: {
+      params: {
         key: "value",
         arr: ["item1", "item2"]
       }
@@ -573,7 +573,7 @@ describe("makeURL", () => {
     });
 
     const url = makeURL("https://example.com", {
-      queryParams: {
+      params: {
         key: "value",
         arr: []
       }
@@ -592,7 +592,7 @@ describe("makeURL", () => {
     });
 
     const url = makeURL("https://example.com", {
-      queryParams: {
+      params: {
         key: "value",
         arr: ["item1", "item2"]
       }
@@ -611,7 +611,7 @@ describe("makeURL", () => {
     });
 
     const url = makeURL("https://example.com", {
-      queryParams: {
+      params: {
         key: "value",
         arr: []
       }

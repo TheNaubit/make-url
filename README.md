@@ -41,7 +41,7 @@ npm install --save @nauverse/make-url
 import { makeURL } from "@nauverse/make-url";
 
 makeURL("https://api.example.com/", "/:id/:param2/:id///", {
-  queryParams: {
+  params: {
     id: 1,
     param2: "678"
   }
@@ -171,7 +171,7 @@ const SOME_SLUG = 'hey';
 
 function getUserPosts(id, limit, offset) {
   const requestUrl = makeURL('api.example.com', SOME_SLUG, 'users/:id/posts', {
-      queryParams: { 
+      params: { 
         id,
         limit,
         offset 
@@ -213,26 +213,27 @@ You can call with with any amount of string values and optionally at the end wit
 A config object has the following interface:
 ~~~ts
 export interface IParams {
-  queryParams: Record<string, unknown>;
-  hashParam: string;
+  params: Record<string, unknown>;
+  hash: string;
   config: {
     forceProtocol: "http" | "https" | "none" | "auto" | "auto-insecure";
     trailingSlash: "add" | "remove";
     strict: boolean;
     allowEmptyPathSegments: boolean;
+    arraySerializer: "stringify" | "repeat" | "comma";
   };
 }
 ~~~
 Every field in the object is optional.
 
-`queryParams` is an optional object that contains key-value pairs. If in the generated URL is there any match of `:<key>`, being `<key>` any of the keys in that object, the matches will be replaced with the value of their respective keys.
+`params` is an optional object that contains key-value pairs. If in the generated URL is there any match of `:<key>`, being `<key>` any of the keys in that object, the matches will be replaced with the value of their respective keys.
 If they are not replaced in the URL, they will be added to the URL as query parameters.
 
 Let's see some examples:
 ### makeURL with only query parameters
 ~~~ts
 makeURL("https://example.com", {
-  queryParams: {
+  params: {
     id: 12,
     name: "test"
   }
@@ -243,7 +244,7 @@ makeURL("https://example.com", {
 ### makeURL with query parameters and also URL params
 ~~~ts
 makeURL("https://example.com", ":id/", {
-  queryParams: {
+  params: {
     id: 12,
     name: "test"
   }
@@ -251,18 +252,18 @@ makeURL("https://example.com", ":id/", {
 // https://example.com/12?name=test
 ~~~
 
-> Notice that the `queryParams` values can be of any type. I used in the examples `string` and `number` types, but you can use anything (including objects) and it will be always safely casted. Don't worry if the string contains invalid characters, everything is safely encoded in this library!
+> Notice that the `params` values can be of any type. I used in the examples `string` and `number` types, but you can use anything (including objects) and it will be always safely casted. Don't worry if the string contains invalid characters, everything is safely encoded in this library!
 
 ---
 
-`hashParam` is another optional field containg a string.
+`hash` is another optional field containg a string.
 >  Don't worry if the string contains invalid characters, everything is safely encoded in this library!
 
 Let's see one example:
 ### makeURL with a hash parameter
 ~~~ts
 makeURL("https://example.com", {
-  hashParam: "test"
+  hash: "test"
 });
 // https://example.com#test
 ~~~
@@ -309,7 +310,7 @@ There are three possible values: `repeat`, `comma` and `stringify`. Each of them
 #### makeURL with `arraySerializer: 'repeat'`
 ~~~ts
 makeURL("https://example.com", "/test", {
-  queryParams: {
+  params: {
     arr: ['a', 'b', 'c']
   },
   config: {
@@ -322,7 +323,7 @@ makeURL("https://example.com", "/test", {
 #### makeURL with `arraySerializer: 'stringify'`
 ~~~ts
 makeURL("https://example.com", "/test", {
-  queryParams: {
+  params: {
     arr: ['a', 'b', 'c']
   },
   config: {
@@ -335,7 +336,7 @@ makeURL("https://example.com", "/test", {
 #### makeURL with `arraySerializer: 'comma'`
 ~~~ts
 makeURL("https://example.com", "/test", {
-  queryParams: {
+  params: {
     arr: ['a', 'b', 'c']
   },
   config: {
@@ -349,7 +350,7 @@ makeURL("https://example.com", "/test", {
 #### makeURL with `arraySerializer: 'comma'` with array as URL variable
 ~~~ts
 makeURL("https://example.com", "/test/:arr", {
-  queryParams: {
+  params: {
     arr: ['a', 'b', 'c']
   },
   config: {
@@ -818,11 +819,11 @@ To finish with this "guide", I want to provide some examples combining several o
 #### Example 1
 ~~~ts
 makeURL("example.com/", "/test/:id///edit/", {
-  queryParams: {
+  params: {
     id: 1,
     name: "John"
   },
-  hashParam: "test",
+  hash: "test",
   config: {
     forceProtocol: "auto",
     trailingSlash: "remove",
@@ -845,7 +846,7 @@ setMakeURLDefaultConfig({
 //
 
 makeURL("https://api.example.com/", "/:id/:param2/:id///", {
-  queryParams: {
+  params: {
     id: 1,
     param2: "678"
   }

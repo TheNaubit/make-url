@@ -9,8 +9,8 @@ export const BASE_DEFAULT_MAKE_URL_CONFIG: IConfig = {
 };
 
 const DEFAULT_PARAMS: IParams<IConfig> = {
-  queryParams: {},
-  hashParam: "",
+  params: {},
+  hash: "",
   config: BASE_DEFAULT_MAKE_URL_CONFIG
 };
 
@@ -206,7 +206,7 @@ export default function makeURL(
     }
   > = {};
 
-  Object.entries(safeParams.queryParams).forEach(([key, value]) => {
+  Object.entries(safeParams.params).forEach(([key, value]) => {
     // We need to safe cast the value to a string, it could be anything: a string, a number, an object, etc... so sometimes the .toString() method will not work as expected
     let safeValue: string | Array<string> = "";
     let isValueArray = false;
@@ -288,7 +288,7 @@ export default function makeURL(
 
   // Now we have to add the hash params to the URL
   // Add the hash params to the URL if there are any
-  const safeHashParamValue: string = safeParams.hashParam.trim();
+  const safeHashParamValue: string = safeParams.hash.trim();
   if (safeHashParamValue !== "") {
     url += `#${encodeURIComponent(safeHashParamValue)}`;
   }
