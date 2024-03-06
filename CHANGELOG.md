@@ -1,3 +1,13 @@
+# [1.7.0](https://github.com/TheNaubit/make-url/compare/v1.6.1...v1.7.0) (2024-03-06)
+
+
+### Features
+
+* add improved protocol detection and handle messy strings in makeURL ([4808c3b](https://github.com/TheNaubit/make-url/commit/4808c3b6c8c282f696bf773378d25e8307cc32a5))
+* renamed queryParams to params and hashParam to hash ([1c663c8](https://github.com/TheNaubit/make-url/commit/1c663c8dbab84d98db8983acea566da722fe0b83))
+
+
+
 ## [1.6.1](https://github.com/TheNaubit/make-url/compare/v1.6.0...v1.6.1) (2024-03-05)
 
 
@@ -32,15 +42,6 @@
 ### Features
 
 * updated readme with better example ([e020530](https://github.com/TheNaubit/make-url/commit/e020530ec3e1bebbac91bde28e5c9436b3a5c5ec))
-
-
-
-## [1.3.1](https://github.com/TheNaubit/make-url/compare/v1.3.0...v1.3.1) (2024-03-05)
-
-
-### Bug Fixes
-
-* update package.json exports ([4410e29](https://github.com/TheNaubit/make-url/commit/4410e290460c8c2f0c36829a6cc9b250d291853b))
 
 
 
