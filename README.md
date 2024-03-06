@@ -84,6 +84,9 @@ Feel free to test and explore and if later on you need more guidance, read the w
       <td>👌 1kB <a href="https://bundlephobia.com/package/@nauverse/make-url@latest">minified and gzipped</a></td>
     </tr>
     <tr>
+      <td>🔒 Reliable. Even when you pass really messed up strings, it finds a way to build a valid URL (just check the tests for some examples)</td>
+    </tr>
+    <tr>
       <td>✍️ TypeScript types provided</td>
     </tr>
     <tr>

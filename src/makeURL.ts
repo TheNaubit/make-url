@@ -1,3 +1,8 @@
+import {
+  detectDomainInString,
+  safeStringArrayAssembler,
+  safeStringArrayToURLString
+} from "./lib/helpers";
 import type { IParams, IConfig } from "./types";
 
 export const BASE_DEFAULT_MAKE_URL_CONFIG: IConfig = {
@@ -103,44 +108,31 @@ export default function makeURL(
     }
   };
 
-  let isURLWithRelativeProtocol = false;
+  const safeStringArrayAssemblerData = safeStringArrayAssembler(
+    stringFragments,
+    safeParams.config
+  );
 
   // First, clean the fragments by removing leading and trailing slashes, replacing spaces with dashes and encoding invalid characters
-  const cleanedFragments = stringFragments.map((fragment, index) => {
-    let baseStartOfFragment = "";
-    let baseFragment = fragment.trim();
-    if (index === 0) {
-      if (baseFragment.startsWith("http://")) {
-        baseStartOfFragment = "http://";
-        baseFragment = baseFragment.slice(7);
-      } else if (baseFragment.startsWith("https://")) {
-        baseStartOfFragment = "https://";
-        baseFragment = baseFragment.slice(8);
-        // If the URL starts with `//` and includes a dot, it means it's a URL with a relative protocol, so we need to extract the `//` and add it back after the cleaning
-      } else if (baseFragment.startsWith("//") && baseFragment.includes(".")) {
-        baseStartOfFragment = "//";
-        baseFragment = baseFragment.slice(2);
-        isURLWithRelativeProtocol = true;
+  safeStringArrayAssemblerData.array = safeStringArrayAssemblerData.array.map(
+    (fragment, index) => {
+      // Since we used the safeStringArrayAssembler function, we know that the first fragment is the protocol (if there is any)
+      if (index === 0 && safeStringArrayAssemblerData.hasProtocol) {
+        // Since it is a protocol, we can just return it as is
+        return fragment;
       }
+
+      // Since it does not contain a protocol, we need to clean it
+      return fragment
+        .split("/")
+        .map(f => encodeURIComponent(f).replace(/%3A/g, ":"))
+        .join("/");
     }
-    return `${baseStartOfFragment}${baseFragment
-      .split("/")
-      .map(f => encodeURIComponent(f).replace(/%3A/g, ":"))
-      .join("/")}`;
-    // Replace leading and trailing slashes with nothing
-    // .replace(/^[\/\s]+|[\/\s]+$/g, "")
-    // Replace spaces with dashes
-    // .replace(/\s+/g, "-")
-    // Encode invalid characters
-    // eslint-disable-next-line no-useless-escape
-    // .replace(/[^a-zA-Z0-9-._~:/?#\[\]@!$&'()*+,;=]/g, match => {
-    //   return encodeURIComponent(match);
-    // })
-  });
+  );
+
   // Check if the first fragment includes a protocol and if it doesnt, add the forceProtocol protocol (only if it's not set to "none")
   if (
-    !cleanedFragments[0].includes("://") &&
-    !isURLWithRelativeProtocol &&
+    !safeStringArrayAssemblerData.hasProtocol &&
     safeParams.config.forceProtocol !== "none"
   ) {
     // If the forceProtocol is set to "auto" or "auto-insecure", we need to check if the URL starts with a domain. If it does, we add the forceProtocol, if it doesn't, we don't add it
@@ -151,23 +143,34 @@ export default function makeURL(
       // If `forceProtocol`is `auto-insecure`, we use `http` instead of `https` (if the URL starts with a domain)
       const shouldUseHttps = safeParams.config.forceProtocol === "auto";
 
-      try {
-        // new URL works with strings without domain extensions (like "https://a") so to avoid adding the protocol to relative URLs, we will run the `new URL(...)` check only if the fragment contains a dot
-        if (cleanedFragments[0].includes(".")) {
-          new URL("https://" + cleanedFragments[0]);
-          // If it doesn't throw an error, it means the first fragment is a domain, so we add the protocol
-          cleanedFragments[0] = `${shouldUseHttps ? "https" : "http"}://${cleanedFragments[0]}`;
-        }
-      } catch {
-        // If it fails, it means the first fragment is not a domain, so we don't add the protocol
+      const temporalDomainInfo = detectDomainInString(
+        `https://${safeStringArrayToURLString(safeStringArrayAssemblerData)}`
+      ); // Add some protocol to the URL to make sure the `detectDomainInString` function works as expected, since we now know that the temporalJoinedURL has no protocol
+
+      if (temporalDomainInfo.hasDomain) {
+        // Insert a new item at the beginning of the safeStringArrayAssemblerData array
+        safeStringArrayAssemblerData.array = [
+          `${shouldUseHttps ? "https" : "http"}://`,
+          ...safeStringArrayAssemblerData.array
+        ];
+        safeStringArrayAssemblerData.hasProtocol = true;
+        safeStringArrayAssemblerData.protocol = shouldUseHttps
+          ? "https"
+          : "http";
       }
     } else {
-      cleanedFragments[0] = `${safeParams.config.forceProtocol}://${cleanedFragments[0]}`;
+      // Insert a new item at the beginning of the safeStringArrayAssemblerData array
+      safeStringArrayAssemblerData.array = [
+        `${safeParams.config.forceProtocol}://`,
+        ...safeStringArrayAssemblerData.array
+      ];
+      safeStringArrayAssemblerData.hasProtocol = true;
+      safeStringArrayAssemblerData.protocol = safeParams.config.forceProtocol;
     }
   }
 
   // Generate the URL by joining the fragments
-  let url = cleanedFragments.join("/");
+  let url = safeStringArrayToURLString(safeStringArrayAssemblerData);
 
   // If the trailingSlash is set to "add" and the URL does not end with a slash, add it
   if (safeParams.config.trailingSlash === "add" && !url.endsWith("/")) {
@@ -189,8 +192,22 @@ export default function makeURL(
 
     // We need to support relative protocol so before doing the replacement, check if the url starts with `//` and if it does, extract it and add it back after the replacement
     let relativeProtocol = "";
-    if (isURLWithRelativeProtocol) {
-      relativeProtocol = "//";
+
+    // If the protocol is detected as relative, there are two options
+    if (safeStringArrayAssemblerData.protocol === "relative") {
+      // One, the URL contains the relative protocol and also contains a
+      // valid domain (or subdomain)
+      if (safeStringArrayAssemblerData.hasProtocol) {
+        // Then we treat it as a URl with a valid relative protocol
+        relativeProtocol = "//";
+        // Or two, the URL contains the relative protocol but it does not contain
+        // a valid domain (or subdomain)
+      } else {
+        // Then we treat it as an absolute URL instead
+        relativeProtocol = "/";
+      }
+
+      // In any case, we remove the relative protocol from the URL
       url = url.slice(2);
     }
 
@@ -297,10 +314,11 @@ export default function makeURL(
   // Important: If we are using a relative URL or an absolute URL without host, this will throw an error, so we should not use the `strict` mode in those cases
   if (safeParams.config.strict) {
     try {
-      const testedURL = new URL(url);
+      // This function checks if it is a valid URL and also if it contains a valid
+      // domain (or subdomain, etc...), so we can be sure that it is a valid URL
+      const testResultData = detectDomainInString(url);
 
-      // If the host does not include a dot, it means it's not a valid domain, so we throw an error
-      if (!testedURL.host.includes(".")) {
+      if (!testResultData.hasDomain) {
         throw null;
       }
     } catch {

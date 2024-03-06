@@ -658,6 +658,52 @@ describe("makeURL", () => {
       makeURL("//example.com", "blog", "post/1");
     }).toThrow("The generated URL is not valid: //example.com/blog/post/1");
   });
+
+  it("should detect the protocol even if it is splitted in several strings", () => {
+    // Set the configuration object to some default values
+    setMakeURLDefaultConfig({
+      forceProtocol: "auto",
+      trailingSlash: "remove",
+      strict: true,
+      allowEmptyPathSegments: false
+    });
+
+    const url = makeURL(
+      "htt",
+      "p",
+      "s:",
+      "//example",
+      ".com",
+      "blog",
+      "post/1"
+    );
+    expect(url).toBe("https://example.com/blog/post/1");
+  });
+
+  it("should build valid URLs even if the strings provided are a mess", () => {
+    // Set the configuration object to some default values
+    setMakeURLDefaultConfig({
+      forceProtocol: "auto",
+      trailingSlash: "remove",
+      strict: true,
+      allowEmptyPathSegments: true
+    });
+
+    const url = makeURL(
+      "htt",
+      "p",
+      "",
+      "s:",
+      "//example",
+      "",
+      ".com",
+      "",
+      " ",
+      "blog",
+      "post/1"
+    );
+    expect(url).toBe("https://example.com//%20/blog/post/1");
+  });
 });
 
 describe("setMakeURLDefaultConfig", () => {
