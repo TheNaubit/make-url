@@ -1,3 +1,12 @@
+# [1.8.0](https://github.com/TheNaubit/make-url/compare/v1.7.0...v1.8.0) (2024-03-11)
+
+
+### Features
+
+* updated dev dependencies ([fd5ed1f](https://github.com/TheNaubit/make-url/commit/fd5ed1f0e86594778a8473e610c12ceadf688cf1))
+
+
+
 # [1.7.0](https://github.com/TheNaubit/make-url/compare/v1.6.1...v1.7.0) (2024-03-06)
 
 
@@ -33,15 +42,6 @@
 ### Features
 
 * update project references in CONTRIBUTING.md and README.md ([ab5ca13](https://github.com/TheNaubit/make-url/commit/ab5ca13a3eefbb955a677682e8818760c65c0529))
-
-
-
-# [1.4.0](https://github.com/TheNaubit/make-url/compare/v1.3.1...v1.4.0) (2024-03-05)
-
-
-### Features
-
-* updated readme with better example ([e020530](https://github.com/TheNaubit/make-url/commit/e020530ec3e1bebbac91bde28e5c9436b3a5c5ec))
 
 
 
