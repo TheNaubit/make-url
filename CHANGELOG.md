@@ -1,3 +1,12 @@
+# [1.10.0](https://github.com/TheNaubit/make-url/compare/v1.9.0...v1.10.0) (2024-03-25)
+
+
+### Features
+
+* update vite version to 5.2.6 ([cf45dd6](https://github.com/TheNaubit/make-url/commit/cf45dd607404e49a9f345c253acf0121d93ee472))
+
+
+
 # [1.9.0](https://github.com/TheNaubit/make-url/compare/v1.8.0...v1.9.0) (2024-03-22)
 
 
@@ -32,16 +41,6 @@
 ### Bug Fixes
 
 * fix formatting of dependencies in README.md ([58427b6](https://github.com/TheNaubit/make-url/commit/58427b6f17a6075ea3f2be01fe5ebbe9ba6386ce))
-
-
-
-# [1.6.0](https://github.com/TheNaubit/make-url/compare/v1.5.0...v1.6.0) (2024-03-05)
-
-
-### Features
-
-* add arraySerializer option to IConfig interface and implement its functionality ([93ace6c](https://github.com/TheNaubit/make-url/commit/93ace6c961e01b57227358742f9e7384f0d811c6))
-* update README.md and package.json ([100e0ff](https://github.com/TheNaubit/make-url/commit/100e0ff517c73cc039865b24ec39b51d703317aa))
 
 
 
