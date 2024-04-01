@@ -1,3 +1,12 @@
+## [1.10.2](https://github.com/TheNaubit/make-url/compare/v1.10.1...v1.10.2) (2024-04-01)
+
+
+### Bug Fixes
+
+* updated dev dependecies ([d14906b](https://github.com/TheNaubit/make-url/commit/d14906b67cc6d5df3c8e0c49949462918fa284ac))
+
+
+
 ## [1.10.1](https://github.com/TheNaubit/make-url/compare/v1.10.0...v1.10.1) (2024-03-25)
 
 
@@ -31,16 +40,6 @@
 ### Features
 
 * updated dev dependencies ([fd5ed1f](https://github.com/TheNaubit/make-url/commit/fd5ed1f0e86594778a8473e610c12ceadf688cf1))
-
-
-
-# [1.7.0](https://github.com/TheNaubit/make-url/compare/v1.6.1...v1.7.0) (2024-03-06)
-
-
-### Features
-
-* add improved protocol detection and handle messy strings in makeURL ([4808c3b](https://github.com/TheNaubit/make-url/commit/4808c3b6c8c282f696bf773378d25e8307cc32a5))
-* renamed queryParams to params and hashParam to hash ([1c663c8](https://github.com/TheNaubit/make-url/commit/1c663c8dbab84d98db8983acea566da722fe0b83))
 
 
 
