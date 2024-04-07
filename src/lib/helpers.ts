@@ -276,7 +276,7 @@ function extractDomainFromArray(
 
   // If the array had a protocol we have to add it back at the beginning
   // of the array before returning it
-  if (hasProtocolExtracted) {
+  if (hasProtocolExtracted && array[0]) {
     returnedFragments = [array[0], ...returnedFragments];
   }
 
@@ -340,7 +340,7 @@ export function safeStringArrayAssembler(
     // We need to check if there is a second fragment and if there is one, we need to remove any leading slashes it might contain
     // That way we can be sure the final URL won't contain things like "https:///example.com/blog"
     if (returnedFragments.length > 1) {
-      returnedFragments[1] = returnedFragments[1].replace(/^\/*/, "");
+      returnedFragments[1] = (returnedFragments[1] ?? "").replace(/^\/*/, "");
     }
   }
 
