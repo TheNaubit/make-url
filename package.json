@@ -26,7 +26,7 @@
     "concatenate",
     "urlcat"
   ],
-  "version": "1.10.3",
+  "version": "1.10.4",
   "type": "module",
   "main": "./dist/make-url.umd.cjs",
   "module": "./dist/make-url.js",
