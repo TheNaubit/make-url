@@ -1,3 +1,12 @@
+## [1.10.5](https://github.com/TheNaubit/make-url/compare/v1.10.4...v1.10.5) (2024-04-11)
+
+
+### Bug Fixes
+
+* update dev dependencies in package.json ([2369e85](https://github.com/TheNaubit/make-url/commit/2369e85ce63eb2c5a5ed262b89f7ca4841ca2539))
+
+
+
 ## [1.10.4](https://github.com/TheNaubit/make-url/compare/v1.10.3...v1.10.4) (2024-04-07)
 
 
@@ -31,15 +40,6 @@
 ### Bug Fixes
 
 * update package-lock.json with version changes ([ae8c456](https://github.com/TheNaubit/make-url/commit/ae8c456642e2838c04eee2a90ea71f2c895f5ec7))
-
-
-
-# [1.10.0](https://github.com/TheNaubit/make-url/compare/v1.9.0...v1.10.0) (2024-03-25)
-
-
-### Features
-
-* update vite version to 5.2.6 ([cf45dd6](https://github.com/TheNaubit/make-url/commit/cf45dd607404e49a9f345c253acf0121d93ee472))
 
 
 
