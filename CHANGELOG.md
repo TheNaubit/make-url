@@ -1,3 +1,12 @@
+## [1.10.7](https://github.com/TheNaubit/make-url/compare/v1.10.6...v1.10.7) (2024-04-15)
+
+
+### Bug Fixes
+
+* update dev dependencies in package.json ([d64db3a](https://github.com/TheNaubit/make-url/commit/d64db3a473eb5591a6ee7f86cb54ae6f176a5ac4))
+
+
+
 ## [1.10.6](https://github.com/TheNaubit/make-url/compare/v1.10.5...v1.10.6) (2024-04-15)
 
 
@@ -31,15 +40,6 @@
 ### Bug Fixes
 
 * updated version of some dev dependencies ([816c578](https://github.com/TheNaubit/make-url/commit/816c57805790f3cb5af84c7213bc89d1f7fdaa01))
-
-
-
-## [1.10.2](https://github.com/TheNaubit/make-url/compare/v1.10.1...v1.10.2) (2024-04-01)
-
-
-### Bug Fixes
-
-* updated dev dependecies ([d14906b](https://github.com/TheNaubit/make-url/commit/d14906b67cc6d5df3c8e0c49949462918fa284ac))
 
 
 
