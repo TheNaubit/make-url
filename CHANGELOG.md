@@ -1,3 +1,12 @@
+## [1.10.8](https://github.com/TheNaubit/make-url/compare/v1.10.7...v1.10.8) (2024-05-20)
+
+
+### Bug Fixes
+
+* updated vite config ([1cf6a3a](https://github.com/TheNaubit/make-url/commit/1cf6a3ad9ffd21d3a0b1e64af1f99c8068ca02b8))
+
+
+
 ## [1.10.7](https://github.com/TheNaubit/make-url/compare/v1.10.6...v1.10.7) (2024-04-15)
 
 
@@ -31,15 +40,6 @@
 ### Bug Fixes
 
 * fix nullish coalescing operator usage in helpers.ts and vite.config.ts ([c841b39](https://github.com/TheNaubit/make-url/commit/c841b39af5499325281f8405b797486a80db7572))
-
-
-
-## [1.10.3](https://github.com/TheNaubit/make-url/compare/v1.10.2...v1.10.3) (2024-04-07)
-
-
-### Bug Fixes
-
-* updated version of some dev dependencies ([816c578](https://github.com/TheNaubit/make-url/commit/816c57805790f3cb5af84c7213bc89d1f7fdaa01))
 
 
 
