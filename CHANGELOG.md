@@ -1,3 +1,13 @@
+## [1.10.13](https://github.com/TheNaubit/make-url/compare/v1.10.12...v1.10.13) (2024-07-01)
+
+
+### Bug Fixes
+
+* fixed action ([2ad0c47](https://github.com/TheNaubit/make-url/commit/2ad0c475d72ce93b2d21275ee0864cefdc9f3f24))
+* fixed package.json file ([445485a](https://github.com/TheNaubit/make-url/commit/445485a39c3d2cfa5f7031e375b42d39fd396770))
+
+
+
 ## [1.10.12](https://github.com/TheNaubit/make-url/compare/v1.10.11...v1.10.12) (2024-07-01)
 
 
@@ -32,15 +42,6 @@
 
 * updated package.json file ([4684be1](https://github.com/TheNaubit/make-url/commit/4684be1703876d1a96b3df49ddd629bafc81c3e1))
 * upgraded dependencies and migrated from eslint / prettier to biomejs ([b6bbaad](https://github.com/TheNaubit/make-url/commit/b6bbaad5dc537b8f98da4ceb1eb6a70953150758))
-
-
-
-## [1.10.8](https://github.com/TheNaubit/make-url/compare/v1.10.7...v1.10.8) (2024-05-20)
-
-
-### Bug Fixes
-
-* updated vite config ([1cf6a3a](https://github.com/TheNaubit/make-url/commit/1cf6a3ad9ffd21d3a0b1e64af1f99c8068ca02b8))
 
 
 
