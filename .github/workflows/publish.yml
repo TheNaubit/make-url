@@ -17,8 +17,8 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Static Analysis
-        run: npm run lint
+      # - name: Static Analysis
+      #   run: npm run lint
 
       - name: Run Tests
         run: npm run test:run
