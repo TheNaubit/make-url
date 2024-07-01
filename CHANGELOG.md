@@ -1,3 +1,13 @@
+## [1.10.9](https://github.com/TheNaubit/make-url/compare/v1.10.8...v1.10.9) (2024-07-01)
+
+
+### Bug Fixes
+
+* updated package.json file ([4684be1](https://github.com/TheNaubit/make-url/commit/4684be1703876d1a96b3df49ddd629bafc81c3e1))
+* upgraded dependencies and migrated from eslint / prettier to biomejs ([b6bbaad](https://github.com/TheNaubit/make-url/commit/b6bbaad5dc537b8f98da4ceb1eb6a70953150758))
+
+
+
 ## [1.10.8](https://github.com/TheNaubit/make-url/compare/v1.10.7...v1.10.8) (2024-05-20)
 
 
@@ -31,15 +41,6 @@
 ### Bug Fixes
 
 * update dev dependencies in package.json ([2369e85](https://github.com/TheNaubit/make-url/commit/2369e85ce63eb2c5a5ed262b89f7ca4841ca2539))
-
-
-
-## [1.10.4](https://github.com/TheNaubit/make-url/compare/v1.10.3...v1.10.4) (2024-04-07)
-
-
-### Bug Fixes
-
-* fix nullish coalescing operator usage in helpers.ts and vite.config.ts ([c841b39](https://github.com/TheNaubit/make-url/commit/c841b39af5499325281f8405b797486a80db7572))
 
 
 
