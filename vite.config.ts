@@ -17,7 +17,9 @@ export default defineConfig({
 			// Exclude peer dependencies from the bundle to reduce bundle size
 			external: [
 				"react/jsx-runtime",
-				...Object.keys(packageJson?.peerDependencies || {}),
+				...Object.keys(
+					(packageJson as Record<string, any>)?.peerDependencies || {},
+				),
 			],
 		},
 		sourcemap: true,
