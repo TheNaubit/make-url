@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 
-import { peerDependencies } from "./package.json";
+import packageJson from "./package.json";
 
 // https://vitejs.dev/guide/build.html#library-mode
 export default defineConfig({
@@ -15,7 +15,10 @@ export default defineConfig({
 		},
 		rollupOptions: {
 			// Exclude peer dependencies from the bundle to reduce bundle size
-			external: ["react/jsx-runtime", ...Object.keys(peerDependencies)],
+			external: [
+				"react/jsx-runtime",
+				...Object.keys(packageJson?.peerDependencies || {}),
+			],
 		},
 		sourcemap: true,
 		emptyOutDir: true,
