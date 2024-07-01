@@ -1,3 +1,12 @@
+## [1.10.12](https://github.com/TheNaubit/make-url/compare/v1.10.11...v1.10.12) (2024-07-01)
+
+
+### Bug Fixes
+
+* fixed package.json ([42018b9](https://github.com/TheNaubit/make-url/commit/42018b9a20ea652c8cec34f1178d074ef2805ad1))
+
+
+
 ## [1.10.11](https://github.com/TheNaubit/make-url/compare/v1.10.10...v1.10.11) (2024-07-01)
 
 
@@ -32,15 +41,6 @@
 ### Bug Fixes
 
 * updated vite config ([1cf6a3a](https://github.com/TheNaubit/make-url/commit/1cf6a3ad9ffd21d3a0b1e64af1f99c8068ca02b8))
-
-
-
-## [1.10.7](https://github.com/TheNaubit/make-url/compare/v1.10.6...v1.10.7) (2024-04-15)
-
-
-### Bug Fixes
-
-* update dev dependencies in package.json ([d64db3a](https://github.com/TheNaubit/make-url/commit/d64db3a473eb5591a6ee7f86cb54ae6f176a5ac4))
 
 
 
