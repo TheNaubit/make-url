@@ -109,6 +109,7 @@ function getUnsafeMergedURLString(
 				// If it is the first item or if it contains a dot (potentially a part of the domain), we don't join with "/"
 				if (index === 0 || v.startsWith(".")) return v;
 				// Anything else is joined with "/"
+				// biome-ignore lint/style/noUselessElse: We need the else statement to return the value
 				else return `/${v}`;
 			})
 			// Previously I said "join", but it was more like modifying the fragment so we could just concatenate the array without any separator
@@ -134,13 +135,13 @@ function extractProtocolFromArray(
 	let protocolFragment = "";
 	const returnedFragments: Array<string> = [];
 
-	array.forEach((fragment) => {
+	for (const fragment of array) {
 		// If the fragment is empty and there are already fragments in the returned fragments, we add the fragment to the returned fragments
 		// If there are no fragments in the returned fragments, we skip it
 		// since it could break our logic to handle the protocol and in any case it would be an empty fragment
 		if (fragment === "" && returnedFragments.length > 0) {
 			returnedFragments.push(fragment);
-			return;
+			continue;
 		}
 		// If the current length plus the length of the fragment is less than the protocol index, we add the fragment to the protocol fragment
 		if (currentLength + fragment.length <= protocolIndex) {
@@ -166,7 +167,7 @@ function extractProtocolFromArray(
 			}
 			returnedFragments.push(fragment);
 		}
-	});
+	}
 
 	if (protocolFragment !== "") {
 		returnedFragments.push(protocolFragment);
@@ -219,7 +220,7 @@ function extractDomainFromArray(
 	// This will be the array of fragments we will return
 	let returnedFragments: Array<string> = [];
 
-	safeArray.forEach((fragment) => {
+	for (const fragment of safeArray) {
 		// We will filter out empty strings
 		if (fragment === "") {
 			// We need to check first if the current length is greater or equal than the domain index, because that means we already found the full domain in the array
@@ -236,7 +237,7 @@ function extractDomainFromArray(
 					returnedFragments.push(fragment);
 				}
 			}
-			return;
+			continue;
 		}
 
 		// If the current length plus the length of the fragment is less than the domain index, we add the fragment to the domain fragment
@@ -266,7 +267,7 @@ function extractDomainFromArray(
 			// Then we push the fragment to the array
 			returnedFragments.push(fragment);
 		}
-	});
+	}
 
 	// If the domain fragment is not empty, we push it to the array
 	if (domainFragment !== "") {

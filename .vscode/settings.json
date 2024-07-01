@@ -19,15 +19,11 @@
 	"files.eol": "\n",
 	"editor.formatOnSave": true,
 	"editor.defaultFormatter": "biomejs.biome",
-	"eslint.format.enable": true,
 	"eslint.workingDirectories": [
 		{
 			"mode": "auto"
 		}
 	],
-	"[typescriptreact]": {
-		"editor.defaultFormatter": "biomejs.biome"
-	},
 	"[javascript]": {
 		"editor.defaultFormatter": "biomejs.biome"
 	},

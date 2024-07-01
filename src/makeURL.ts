@@ -223,7 +223,8 @@ export default function makeURL(
 		}
 	> = {};
 
-	Object.entries(safeParams.params).forEach(([key, value]) => {
+	for (const entry of Object.entries(safeParams.params)) {
+		const [key, value] = entry;
 		// We need to safe cast the value to a string, it could be anything: a string, a number, an object, etc... so sometimes the .toString() method will not work as expected
 		let safeValue: string | Array<string> = "";
 		let isValueArray = false;
@@ -253,25 +254,27 @@ export default function makeURL(
 			value: safeValue,
 			isArray: isValueArray,
 		};
-	});
+	}
 
 	const queryParamsToAdd = new URLSearchParams();
 
 	// We support URLs with replaceable fields, so if one of the keys in queryParams is found in the URL in the format `:<key>`, it will be replaced with the value of the key in queryParams and removed from the queryParams object
 	// If the key is not replaced, it is meant to be added as a query key, so we add it to the queryParamsToAdd object
-	Object.entries(safeQueryParams).forEach(([key, item]) => {
+	for (const entry of Object.entries(safeQueryParams)) {
+		const [key, item] = entry;
+
 		// If the value is an array we can not replace it in the URL, so we skip the URL replacement and add the query param to the queryParamsToAdd object
 		if (item.isArray) {
 			// If the array is an array of objects, we are in the "repeat" mode, so we need to add each object as a query param
 			if (Array.isArray(item.value)) {
-				item.value.forEach((value) => {
+				for (const value of item.value) {
 					queryParamsToAdd.append(key, value);
-				});
+				}
 			} else {
 				// If it is not an array of objects, we can add the array as a single query param
 				queryParamsToAdd.append(key, item.value);
 			}
-			return;
+			continue;
 		}
 
 		let foundAnyMatch = false;
@@ -293,7 +296,7 @@ export default function makeURL(
 			// If we didn't find any match, we add the key to the queryParamsToAdd object
 			queryParamsToAdd.append(key, item.value as string); // Note that we dont call encodeURIComponent here because the URLSearchParams object does it for us and if we did it twice, the resulting string would be double encoded, causing issues
 		}
-	});
+	}
 
 	// Now we have to add the remaining query params to the URL
 	const queryParamsToAddString = queryParamsToAdd.toString();
