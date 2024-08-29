@@ -704,6 +704,38 @@ describe("makeURL", () => {
 		);
 		expect(url).toBe("https://example.com//%20/blog/post/1");
 	});
+
+	it("should support parsing URLs with ports - Check 1", () => {
+		// Set the configuration object to some default values
+		setMakeURLDefaultConfig({
+			forceProtocol: "auto",
+			trailingSlash: "add",
+			strict: true,
+			allowEmptyPathSegments: true,
+		});
+
+		const url = makeURL("https://example.com:12345", "path", "to", "resource");
+		expect(url).toBe("https://example.com:12345/path/to/resource/");
+	});
+
+	it("should support parsing URLs with ports - Check 2", () => {
+		// Set the configuration object to some default values
+		setMakeURLDefaultConfig({
+			forceProtocol: "auto",
+			trailingSlash: "add",
+			strict: true,
+			allowEmptyPathSegments: true,
+		});
+
+		const url = makeURL(
+			"https://example.com",
+			":12345",
+			"path",
+			"to",
+			"resource",
+		);
+		expect(url).toBe("https://example.com:12345/path/to/resource/");
+	});
 });
 
 describe("setMakeURLDefaultConfig", () => {

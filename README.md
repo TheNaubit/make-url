@@ -867,6 +867,10 @@ If you need any help using this library, feel free to [create a GitHub issue](ht
 
 Contributions of any kind (pull requests, bug reports, feature requests, documentation, design) are more than welcome! If you like this project and want to help, but feel like you are stuck, feel free to contact the maintainers.
 
+Other features that we still need to implement:
+- We support ports in the URL but we need to also support username and password in the domain like:
+https://myusername:mypassword@domain.com
+
 ### Building from source
 
 Building the project should be quick and easy. If it isn't, it's the maintainer's fault. Please report any problems with building in a GitHub issue.

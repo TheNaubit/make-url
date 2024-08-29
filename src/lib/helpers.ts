@@ -29,9 +29,11 @@ export function detectDomainInString(str: string): IDomainData {
 			throw null; // We throw an error to be catched in the catch block
 		}
 
+		const hasPort = url.port.trim() !== "";
+
 		return {
 			hasDomain: true,
-			domain: url.hostname,
+			domain: hasPort ? `${url.hostname}:${url.port}` : url.hostname,
 		};
 	} catch {
 		return {
@@ -107,7 +109,32 @@ function getUnsafeMergedURLString(
 			// over how to join, so we use the `.map` method
 			.map((v, index) => {
 				// If it is the first item or if it contains a dot (potentially a part of the domain), we don't join with "/"
-				if (index === 0 || v.startsWith(".") || v.startsWith(":")) return v;
+				// We also make sure to support the : character, since it could be part of the domain (the port)
+				// TODO: Support fragmented strings with the port splitted like:
+				/*
+				const url = makeURL(
+					"https://example.com:",
+					"12345",
+					"path",
+					"to",
+					"resource",
+				);
+				*/
+				// Right now it supports ports like:
+				/*
+				const url = makeURL(
+					"https://example.com",
+					":12345",
+					"path",
+					"to",
+					"resource",
+				);
+				*/
+				// and
+				/*
+				const url = makeURL("https://example.com:12345", "path", "to", "resource");
+				*/
+				if (index === 0 || v.startsWith(".") || v.includes(":")) return v;
 				// Anything else is joined with "/"
 				// biome-ignore lint/style/noUselessElse: We need the else statement to return the value
 				else return `/${v}`;
@@ -203,6 +230,7 @@ function extractDomainFromArray(
 	// Resulting URL has no protocol (we removed it if it was there to remove the case of relative protocols, incompatible with the `detectDomainInString` function)
 	// But the `detectDomainInString` function needs an input URL with a protocol, so we add a fake one
 	const domainData = detectDomainInString(`https://${tempURL}`);
+	console.log({ domainData });
 
 	// If the URL does not contain a domain, there is nothing to "extract"/"sort", so we return the array as is
 	if (!domainData.hasDomain) return array;
