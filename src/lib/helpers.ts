@@ -107,7 +107,7 @@ function getUnsafeMergedURLString(
 			// over how to join, so we use the `.map` method
 			.map((v, index) => {
 				// If it is the first item or if it contains a dot (potentially a part of the domain), we don't join with "/"
-				if (index === 0 || v.startsWith(".")) return v;
+				if (index === 0 || v.startsWith(".") || v.startsWith(":")) return v;
 				// Anything else is joined with "/"
 				// biome-ignore lint/style/noUselessElse: We need the else statement to return the value
 				else return `/${v}`;
