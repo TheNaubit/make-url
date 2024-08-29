@@ -1,3 +1,12 @@
+## [1.10.14](https://github.com/TheNaubit/make-url/compare/v1.10.13...v1.10.14) (2024-08-29)
+
+
+### Bug Fixes
+
+* support for ports ([7abdca8](https://github.com/TheNaubit/make-url/commit/7abdca8724f8008145da69f47f6da553d7b6128a))
+
+
+
 ## [1.10.13](https://github.com/TheNaubit/make-url/compare/v1.10.12...v1.10.13) (2024-07-01)
 
 
@@ -32,16 +41,6 @@
 ### Bug Fixes
 
 * fixed some unoptimal dev config ([abcea07](https://github.com/TheNaubit/make-url/commit/abcea07d103a211ea9cbd6aaa50ee63095d824df))
-
-
-
-## [1.10.9](https://github.com/TheNaubit/make-url/compare/v1.10.8...v1.10.9) (2024-07-01)
-
-
-### Bug Fixes
-
-* updated package.json file ([4684be1](https://github.com/TheNaubit/make-url/commit/4684be1703876d1a96b3df49ddd629bafc81c3e1))
-* upgraded dependencies and migrated from eslint / prettier to biomejs ([b6bbaad](https://github.com/TheNaubit/make-url/commit/b6bbaad5dc537b8f98da4ceb1eb6a70953150758))
 
 
 
