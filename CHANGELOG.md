@@ -1,3 +1,13 @@
+## [1.10.15](https://github.com/TheNaubit/make-url/compare/v1.10.14...v1.10.15) (2024-08-29)
+
+
+### Bug Fixes
+
+* improved port support ([f2c6c77](https://github.com/TheNaubit/make-url/commit/f2c6c772c822cadd5bd5cf4b49b9e4e06993089b))
+* updated dev dependencies ([06b9935](https://github.com/TheNaubit/make-url/commit/06b99357a8c1231a1880d35e83aa3fd03d5683ae))
+
+
+
 ## [1.10.14](https://github.com/TheNaubit/make-url/compare/v1.10.13...v1.10.14) (2024-08-29)
 
 
@@ -32,15 +42,6 @@
 ### Bug Fixes
 
 * cleaned code ([3a94576](https://github.com/TheNaubit/make-url/commit/3a945760199ef91f3b4222315c56c22aff9e5cde))
-
-
-
-## [1.10.10](https://github.com/TheNaubit/make-url/compare/v1.10.9...v1.10.10) (2024-07-01)
-
-
-### Bug Fixes
-
-* fixed some unoptimal dev config ([abcea07](https://github.com/TheNaubit/make-url/commit/abcea07d103a211ea9cbd6aaa50ee63095d824df))
 
 
 
