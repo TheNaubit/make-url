@@ -1,71 +1,73 @@
 {
-	"name": "@nauverse/make-url",
-	"description": "🪄 A tiny URL builder library for TypeScript.",
-	"author": {
-		"name": "Albert Adler | @albertadler",
-		"url": "https://albertadler.com"
-	},
-	"license": "MIT",
-	"homepage": "https://github.com/TheNaubit/make-url",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/TheNaubit/make-url.git"
-	},
-	"bugs": {
-		"url": "https://github.com/TheNaubit/make-url/issues"
-	},
-	"keywords": [
-		"url",
-		"builder",
-		"querystring",
-		"url-builder",
-		"query-string",
-		"uri",
-		"build",
-		"concat",
-		"concatenate",
-		"urlcat"
-	],
-	"version": "1.10.15",
-	"type": "module",
-	"main": "./dist/make-url.umd.cjs",
-	"module": "./dist/make-url.js",
-	"types": "./dist/index.d.ts",
-	"engines": {
-		"node": ">=18.0.0"
-	},
-	"exports": {
-		".": {
-			"import": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/make-url.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/make-url.umd.cjs"
-			}
-		}
-	},
-	"files": ["dist"],
-	"scripts": {
-		"build": "tsc && vite build",
-		"test": "vitest",
-		"test:run": "vitest run",
-		"test:coverage": "vitest run --coverage",
-		"lint": "biome check",
-		"lint:fix": "biome check --write",
-		"prepare": "husky"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "1.8.3",
-		"@commitlint/cli": "19.4.1",
-		"@commitlint/config-conventional": "19.4.1",
-		"@types/node": "20.16.2",
-		"@vitest/coverage-v8": "1.6.0",
-		"husky": "9.1.5",
-		"typescript": "5.5.4",
-		"vite": "5.4.2",
-		"vite-plugin-dts": "3.9.1",
-		"vitest": "1.6.0"
-	}
+  "name": "@nauverse/make-url",
+  "description": "🪄 A tiny URL builder library for TypeScript.",
+  "author": {
+    "name": "Albert Adler | @albertadler",
+    "url": "https://albertadler.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/TheNaubit/make-url",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheNaubit/make-url.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TheNaubit/make-url/issues"
+  },
+  "keywords": [
+    "url",
+    "builder",
+    "querystring",
+    "url-builder",
+    "query-string",
+    "uri",
+    "build",
+    "concat",
+    "concatenate",
+    "urlcat"
+  ],
+  "version": "1.10.16",
+  "type": "module",
+  "main": "./dist/make-url.umd.cjs",
+  "module": "./dist/make-url.js",
+  "types": "./dist/index.d.ts",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/make-url.js"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/make-url.umd.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && vite build",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.8.3",
+    "@commitlint/cli": "19.4.1",
+    "@commitlint/config-conventional": "19.4.1",
+    "@types/node": "20.16.2",
+    "@vitest/coverage-v8": "1.6.0",
+    "husky": "9.1.5",
+    "typescript": "5.5.4",
+    "vite": "5.4.2",
+    "vite-plugin-dts": "3.9.1",
+    "vitest": "1.6.0"
+  }
 }

@@ -1,3 +1,13 @@
+## [1.10.16](https://github.com/TheNaubit/make-url/compare/v1.10.15...v1.10.16) (2024-09-15)
+
+
+### Bug Fixes
+
+* fixed formatting ([3ef8bba](https://github.com/TheNaubit/make-url/commit/3ef8bba638d9c9c64650794aa7c61929ca362c81))
+* removed console.log ([76dc539](https://github.com/TheNaubit/make-url/commit/76dc5390f3e5a0c35e63167ff53807040cd71d84))
+
+
+
 ## [1.10.15](https://github.com/TheNaubit/make-url/compare/v1.10.14...v1.10.15) (2024-08-29)
 
 
@@ -33,15 +43,6 @@
 ### Bug Fixes
 
 * fixed package.json ([42018b9](https://github.com/TheNaubit/make-url/commit/42018b9a20ea652c8cec34f1178d074ef2805ad1))
-
-
-
-## [1.10.11](https://github.com/TheNaubit/make-url/compare/v1.10.10...v1.10.11) (2024-07-01)
-
-
-### Bug Fixes
-
-* cleaned code ([3a94576](https://github.com/TheNaubit/make-url/commit/3a945760199ef91f3b4222315c56c22aff9e5cde))
 
 
 
