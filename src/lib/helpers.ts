@@ -230,7 +230,6 @@ function extractDomainFromArray(
 	// Resulting URL has no protocol (we removed it if it was there to remove the case of relative protocols, incompatible with the `detectDomainInString` function)
 	// But the `detectDomainInString` function needs an input URL with a protocol, so we add a fake one
 	const domainData = detectDomainInString(`https://${tempURL}`);
-	console.log({ domainData });
 
 	// If the URL does not contain a domain, there is nothing to "extract"/"sort", so we return the array as is
 	if (!domainData.hasDomain) return array;
