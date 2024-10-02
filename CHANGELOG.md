@@ -1,3 +1,12 @@
+## [1.10.17](https://github.com/TheNaubit/make-url/compare/v1.10.16...v1.10.17) (2024-10-02)
+
+
+### Bug Fixes
+
+* set the trailingSlash prop to remove by default and updated dev dependencies ([d08f967](https://github.com/TheNaubit/make-url/commit/d08f967d2d9209336d1c1daee298bd64e068dee0))
+
+
+
 ## [1.10.16](https://github.com/TheNaubit/make-url/compare/v1.10.15...v1.10.16) (2024-09-15)
 
 
@@ -34,15 +43,6 @@
 
 * fixed action ([2ad0c47](https://github.com/TheNaubit/make-url/commit/2ad0c475d72ce93b2d21275ee0864cefdc9f3f24))
 * fixed package.json file ([445485a](https://github.com/TheNaubit/make-url/commit/445485a39c3d2cfa5f7031e375b42d39fd396770))
-
-
-
-## [1.10.12](https://github.com/TheNaubit/make-url/compare/v1.10.11...v1.10.12) (2024-07-01)
-
-
-### Bug Fixes
-
-* fixed package.json ([42018b9](https://github.com/TheNaubit/make-url/commit/42018b9a20ea652c8cec34f1178d074ef2805ad1))
 
 
 
