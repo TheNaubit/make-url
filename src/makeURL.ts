@@ -7,7 +7,7 @@ import type { IConfig, IParams } from "./types";
 
 export const BASE_DEFAULT_MAKE_URL_CONFIG: IConfig = {
 	forceProtocol: "auto",
-	trailingSlash: "add",
+	trailingSlash: "remove",
 	strict: false,
 	allowEmptyPathSegments: false,
 	arraySerializer: "repeat",

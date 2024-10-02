@@ -369,7 +369,7 @@ makeURL("https://example.com", "/test/:arr", {
 
 Some servers expect trailing slashes, some does not support it. With this setting, you can configure the behaviour however you want.
 
-By default, this library has this option set to `add` but you can change it in any function call you need it or globally by using the `setMakeURLDefaultConfig` function.
+By default, this library has this option set to `remove` but you can change it in any function call you need it or globally by using the `setMakeURLDefaultConfig` function.
 
 It has two possible values: `add` and `remove`.
 
