@@ -62,7 +62,7 @@
     "@biomejs/biome": "1.9.3",
     "@commitlint/cli": "19.5.0",
     "@commitlint/config-conventional": "19.5.0",
-    "@types/node": "20.16.10",
+    "@types/node": "22.7.4",
     "@vitest/coverage-v8": "1.6.0",
     "husky": "9.1.6",
     "typescript": "5.6.2",
