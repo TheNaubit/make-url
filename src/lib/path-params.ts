@@ -1,5 +1,8 @@
 import { encodePathSegment, encodeValue } from "./encode.js";
 
+// A "." or ".." path segment, also percent-encoded
+const DOT_SEGMENT_REGEX = /^(?:\.|%2e){1,2}$/i;
+
 function escapeRegExp(value: string): string {
 	return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -44,14 +47,36 @@ export function encodePathSegmentWithParams(
 
 	let encoded = "";
 	let lastIndex = 0;
+	let lastKey: string | null = null;
 
 	for (const match of segment.matchAll(regex)) {
 		const key = match[1] as string;
 		encoded += encodeLiteral(segment.slice(lastIndex, match.index));
 		encoded += encodeValue(values.get(key) ?? "");
 		lastIndex = match.index + match[0].length;
+		lastKey = key;
 		onReplace(key);
 	}
 
-	return encoded + encodeLiteral(segment.slice(lastIndex));
+	encoded += encodeLiteral(segment.slice(lastIndex));
+
+	// A value must never create a "." or ".." segment: URL parsers resolve them (also "%2e"), so a value like ".." would climb the path
+	if (lastKey !== null && DOT_SEGMENT_REGEX.test(encoded)) {
+		throw new Error(
+			`The value of the param "${lastKey}" can not be "." or ".." in the path`,
+		);
+	}
+
+	return encoded;
+}
+
+/**
+ * Whether a raw path segment contains a `:<key>` URL param.
+ */
+export function hasPathParam(segment: string, regex: RegExp | null): boolean {
+	if (regex === null) return false;
+	regex.lastIndex = 0;
+	const found = regex.test(segment);
+	regex.lastIndex = 0;
+	return found;
 }

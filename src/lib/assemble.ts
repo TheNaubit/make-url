@@ -15,6 +15,9 @@ const PROTOCOL_REGEX = /^(?:([a-z][a-z0-9+.-]*):)?\/\//i;
 // Only these protocols can be split across fragments ("https:" + "//example.com"): any other protocol must be written in a single fragment, so "redirect" + "https://other.com" is not the protocol "redirecthttps"
 const SPLITTABLE_PROTOCOL_REGEX = /^(?:https?|wss?|ftp)$/i;
 
+// Protocols that run scripts
+const UNSAFE_PROTOCOL_REGEX = /^(?:javascript|vbscript)$/i;
+
 // A fragment that continues an incomplete host: top-level domain labels (".com", ".co.uk") and/or a port (":8080")
 const HOST_CONTINUATION_REGEX =
 	/^(?:(?:\.(?:[a-z]{2,63}|xn--[a-z0-9-]+))+(?::\d+)?|:\d+)(?=$|[/?#])/i;
@@ -57,6 +60,11 @@ function takeProtocol(fragments: Array<string>): {
 
 	const { rest, consumed } = consume(fragments, match[0].length);
 	const scheme = match[1];
+
+	// Script protocols are never protocols: "javascript://%0aalert(1)" is kept as a path, and its ":" is encoded
+	if (scheme && UNSAFE_PROTOCOL_REGEX.test(scheme)) {
+		return { protocol: "", rest: fragments };
+	}
 
 	// A relative protocol ("//") can not be split either: "/" + "/evil.com" is a path, not a link to evil.com
 	if (consumed > 1 && !(scheme && SPLITTABLE_PROTOCOL_REGEX.test(scheme))) {

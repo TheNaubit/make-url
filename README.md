@@ -182,6 +182,13 @@ makeURL("https://example.com", "search", {
 // https://example.com/search?q=caf%C3%A9&page=2&draft=false&from=1970-01-01T00%3A00%3A00.000Z
 ~~~
 
+Values are safe to take from users: they are encoded, so they can never change the host, add path segments or add query params. A value that would create a `.` or `..` path segment (a path traversal) throws:
+
+~~~ts
+makeURL("https://example.com", "users/:id/delete", { params: { id: ".." } });
+// Throws: The value of the param "id" can not be "." or ".." in the path
+~~~
+
 An empty value removes its path segment:
 
 ~~~ts

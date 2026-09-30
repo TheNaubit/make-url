@@ -10,6 +10,7 @@ import { detectDomainInString } from "./lib/host.js";
 import {
 	buildPathParamsRegex,
 	encodePathSegmentWithParams,
+	hasPathParam,
 } from "./lib/path-params.js";
 import { buildQuery, serializeValue } from "./lib/query.js";
 import type { IConfig, TMakeURLConfig } from "./types.js";
@@ -174,10 +175,17 @@ function buildOpaqueURL(
 	config: IConfig,
 	encodeFragment: (fragment: string) => string,
 ): string {
+	// Fragments are joined with "/", except after the protocol ("mailto:" + "me@example.com")
 	const joined = fragments
 		.filter((fragment) => fragment.trim() !== "")
 		.map(encodeFragment)
-		.join("/");
+		.reduce(
+			(url, fragment) =>
+				url === "" || url.endsWith(":")
+					? `${url}${fragment}`
+					: `${url}/${fragment}`,
+			"",
+		);
 	return config.allowEmptyPathSegments
 		? joined
 		: joined.replace(EMPTY_PATH_SEGMENTS_REGEX, "/");
@@ -188,6 +196,7 @@ function buildBaseURL(
 	fragments: Array<string>,
 	config: IConfig,
 	encodeFragment: (fragment: string) => string,
+	hasParam: (segment: string) => boolean,
 ): string {
 	const assembled = assembleURL(
 		config.allowEmptyPathSegments
@@ -205,11 +214,23 @@ function buildBaseURL(
 				)
 			: assembled.path;
 
-	const protocol = resolveProtocol(
+	const resolvedProtocol = resolveProtocol(
 		assembled.protocol,
 		hasHost,
 		config.forceProtocol,
 	);
+	// Without a host, the first path segment would be read as the host after a protocol: it must not come from a param value
+	const firstSegment =
+		pathFragments
+			.join("/")
+			.split("/")
+			.find((segment) => segment !== "") ?? "";
+	const protocol =
+		!hasHost &&
+		resolvedProtocol.toLowerCase() !== "file://" &&
+		hasParam(firstSegment)
+			? ""
+			: resolvedProtocol;
 	const host = hasHost
 		? (encodeDomain(assembled.host) ?? encodeFragment(assembled.host))
 		: "";
@@ -287,7 +308,9 @@ export default function makeURL(...args: MakeURLArgs): string {
 					encodeOpaque,
 				),
 			)
-		: buildBaseURL(inline.fragments, config, encodeFragment);
+		: buildBaseURL(inline.fragments, config, encodeFragment, (segment) =>
+				hasPathParam(segment, pathParamsRegex),
+			);
 
 	const query = buildQuery(
 		inline.query,

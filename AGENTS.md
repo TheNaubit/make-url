@@ -39,7 +39,8 @@ src/
 2. **Params are only replaced in the path**, never in the protocol, the host, the credentials or the port. A URL without host can never gain one from path fragments or params: its path never starts with "//", and a first segment that looks like a protocol ("https:", "javascript:") has its ":" encoded (RFC 3986, section 4.2).
 3. **The host is never percent-encoded.** International domains become punycode (`encodeDomain`), credentials are percent-encoded.
 4. **Literal fragments keep existing `%XX` escapes and `:`**. Values (params and the hash option) are fully encoded.
-5. **`makeURL` never throws on string input** unless `strict` is on or the arguments are invalid (no leading string, options not last).
+5. **`makeURL` never throws on string input** unless `strict` is on, the arguments are invalid (no leading string, options not last), or a param value would create a "." or ".." path segment (a path traversal: URL parsers resolve them, even percent-encoded).
+10. **Param and hash values are untrusted.** They must never change the protocol, the host, the port, the credentials or the path structure. Without a host, a protocol is not added when the first path segment contains a param (the value would become the host). `javascript:` and `vbscript:` are never protocols.
 6. **The README examples are tests.** A `makeURL(...)` call followed by a `// <output>` comment in a `~~~ts` block is run by `src/readme.test.ts`. Keep them true.
 7. **Immutability.** Do not mutate inputs or shared state. `BASE_DEFAULT_MAKE_URL_CONFIG` is frozen and `getMakeURLDefaultConfig` returns a copy.
 8. **No emojis** in code, comments or docs. No `console.log` (Biome `noConsole` is an error).
