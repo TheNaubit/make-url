@@ -61,8 +61,15 @@ export function encodeDomain(domain: string): string | null {
 	// ASCII domains are kept as they are (including their case)
 	if (ASCII_REGEX.test(domain)) return domain;
 
+	// Credentials ("user:password@") are percent-encoded, the host is converted to punycode
+	const atIndex = domain.lastIndexOf("@");
+	const credentials =
+		atIndex === -1
+			? ""
+			: `${domain.slice(0, atIndex).split(":").map(encodeValue).join(":")}@`;
+
 	try {
-		return new URL(`https://${toWellFormed(domain)}`).host;
+		return `${credentials}${new URL(`https://${toWellFormed(domain.slice(atIndex + 1))}`).host}`;
 	} catch {
 		return null;
 	}

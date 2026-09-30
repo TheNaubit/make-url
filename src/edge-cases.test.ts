@@ -98,8 +98,8 @@ describe("encoding", () => {
 	});
 
 	it("serializes symbols and circular objects without throwing", () => {
-		const circular: Record<string, unknown> = {};
-		circular["self"] = circular;
+		const circular: { self?: unknown } = {};
+		circular.self = circular;
 		expect(
 			makeURL("https://example.com", {
 				params: { s: Symbol("x"), c: circular },
@@ -147,6 +147,23 @@ describe("hosts", () => {
 				config: { forceProtocol: "none" },
 			}),
 		).toBe("example.com:8080/a?8080=x");
+	});
+});
+
+describe("credentials", () => {
+	it("keeps a username and a password before the host", () => {
+		expect(makeURL("https://user:pass@example.com", "x")).toBe(
+			"https://user:pass@example.com/x",
+		);
+		expect(makeURL("user@example.com:8080", "x")).toBe(
+			"https://user@example.com:8080/x",
+		);
+	});
+
+	it("keeps them with an international domain", () => {
+		expect(makeURL("https://josé:contraseña@münchen.de", "x")).toBe(
+			"https://jos%C3%A9:contrase%C3%B1a@xn--mnchen-3ya.de/x",
+		);
 	});
 });
 
