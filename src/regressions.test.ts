@@ -30,6 +30,24 @@ describe("path fragments with URL params right after the domain", () => {
 });
 
 describe("URL params replacement", () => {
+	it("cleans the slashes left by empty params", () => {
+		expect(makeURL("https://example.com", ":id", { params: { id: "" } })).toBe(
+			"https://example.com",
+		);
+		expect(
+			makeURL("https://example.com", "users/:id/posts", { params: { id: "" } }),
+		).toBe("https://example.com/users/posts");
+	});
+
+	it("applies the trailing slash after replacing params", () => {
+		expect(
+			makeURL("https://example.com", "users/:id", {
+				params: { id: "" },
+				config: { trailingSlash: "add" },
+			}),
+		).toBe("https://example.com/users/");
+	});
+
 	it("does not replace a param that is a prefix of another one", () => {
 		expect(
 			makeURL("https://example.com", "users/:identifier/:id", {

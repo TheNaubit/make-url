@@ -8,67 +8,96 @@ import type {
 // A fragment that starts with a port, like ":8080" or ":8080/path"
 const PORT_FRAGMENT_REGEX = /^:\d+(?:[/?#]|$)/;
 
-// Only ASCII characters
-const ASCII_REGEX = /^[\x20-\x7e]*$/;
-
-/**
- * Encodes a domain (with an optional port) for a URL: international domains are converted to punycode (ASCII), since percent-encoding is not valid in a host.
- *
- * @param domain - The domain, with an optional port.
- * @returns The encoded domain, or null if it is not a valid domain.
- * @example
- * encodeDomain("münchen.de:8080");
- * // => "xn--mnchen-3ya.de:8080"
- */
-export function encodeDomain(domain: string): string | null {
-	// ASCII domains are kept as they are (including their case)
-	if (ASCII_REGEX.test(domain)) return domain;
-
-	try {
-		return new URL(`https://${domain}`).host;
-	} catch {
-		return null;
-	}
-}
-
 // The end of the host (and port) in a URL without protocol
 const HOST_END_REGEX = /[/?#]/;
+
+// A protocol followed by "//", like "https://", "ws://" or "myapp://"
+const PROTOCOL_REGEX = /^([a-z][a-z0-9+.-]*):\/\//;
+
+// Common file extensions that are not top-level domains: "index.html" or "data.json" are paths, not domains
+const FILE_EXTENSIONS = new Set([
+	"asp",
+	"aspx",
+	"cjs",
+	"css",
+	"csv",
+	"gif",
+	"htm",
+	"html",
+	"ico",
+	"jpeg",
+	"jpg",
+	"js",
+	"json",
+	"jsp",
+	"jsx",
+	"map",
+	"mjs",
+	"mp3",
+	"mp4",
+	"pdf",
+	"php",
+	"png",
+	"scss",
+	"svg",
+	"ts",
+	"tsx",
+	"txt",
+	"wasm",
+	"webp",
+	"woff",
+	"woff2",
+	"xml",
+	"yaml",
+	"yml",
+]);
+
+/**
+ * Whether a hostname (as normalized by the URL API) is a real host: a domain with a top-level domain, an IP address or localhost.
+ */
+function isHost(hostname: string): boolean {
+	// IPv6 addresses are enclosed in brackets
+	if (hostname.startsWith("[")) return true;
+	if (hostname === "localhost") return true;
+
+	const labels = hostname.split(".");
+	// A domain has at least two labels, and none of them is empty ("./page" or "../page" are relative paths)
+	if (labels.length < 2 || labels.some((label) => label === "")) {
+		return false;
+	}
+
+	return !FILE_EXTENSIONS.has(labels[labels.length - 1] as string);
+}
 
 /**
  * Detects the domain in a given string.
  *
- * @param str - The string to detect the domain from. Important: To detect a valid domain, the URL must contain a non-relative protocol (http:// or https://).
+ * @param str - The string to detect the domain from. Important: To detect a valid domain, the URL must contain a non-relative protocol (like http:// or https://).
  * @returns An object containing information about the domain.
  * @example
  * detectDomainInString("https://example.com/blog");
  * // => { hasDomain: true, domain: "example.com" }
  * detectDomainInString("http://example/blog");
  * // => { hasDomain: false, domain: "" }
+ * detectDomainInString("http://localhost:3000/api");
+ * // => { hasDomain: true, domain: "localhost:3000" }
  */
 export function detectDomainInString(str: string): IDomainData {
-	// We will use "new URL(...)" to detect it
-	// If it throws an error, it means the string is not a valid URL, so probably it doesn't have a domain
+	// "new URL(...)" throws if the string is not a valid URL
+	// Not throwing does not mean it has a valid domain ("https://example/blog" does not throw), so the hostname is checked too
 	try {
 		const url = new URL(str);
 
-		// But not throwing in the constructor does not mean it has a valid domain. For example: "https://example/blog" does not throw
-
-		// So we will check if the hostname has at least one dot and then we have greater confidence that it is a domain
-		if (url.hostname.split(".").length < 2) {
-			throw null; // We throw an error to be catched in the catch block
+		if (!isHost(url.hostname)) {
+			return { hasDomain: false, domain: "" };
 		}
-
-		const hasPort = url.port.trim() !== "";
 
 		return {
 			hasDomain: true,
-			domain: hasPort ? `${url.hostname}:${url.port}` : url.hostname,
+			domain: url.port !== "" ? `${url.hostname}:${url.port}` : url.hostname,
 		};
 	} catch {
-		return {
-			hasDomain: false,
-			domain: "",
-		};
+		return { hasDomain: false, domain: "" };
 	}
 }
 
@@ -79,6 +108,8 @@ export function detectDomainInString(str: string): IDomainData {
  * @example
  * detectProtocolInString("https://example.com/blog");
  * // => { hasProtocol: true, protocol: "https" }
+ * detectProtocolInString("wss://example.com/socket");
+ * // => { hasProtocol: true, protocol: "wss" }
  * detectProtocolInString("example.com/blog");
  * // => { hasProtocol: false, protocol: "none" }
  * detectProtocolInString("//example.com/blog");
@@ -90,22 +121,19 @@ export function detectProtocolInString(str: string): IProtocolData {
 	const cleanedStr = str.trim().toLowerCase();
 
 	if (cleanedStr.startsWith("//")) {
-		const urlToCheck = `https:${cleanedStr}`; // Since the domain detector function only works with URLs with a protocol, we add a fake non-relative protocol to the string
-		const detectDomainData = detectDomainInString(urlToCheck);
+		// The domain detector only works with URLs with a protocol, so a fake non-relative protocol is added
+		const detectDomainData = detectDomainInString(`https:${cleanedStr}`);
 		return {
-			hasProtocol: detectDomainData.hasDomain, // Even if it contains a valid relative protocol string, we can not count it as valid since it does not contain a valid domain
-			protocol: "relative", // It contains a valid protocol
+			// A relative protocol only counts as a protocol when it is followed by a domain
+			hasProtocol: detectDomainData.hasDomain,
+			protocol: "relative",
 		};
 	}
 
-	// Regex that checks if the str starts with http or https
-	const hasProtocol = /^(http|https):\/\//.test(cleanedStr);
-	return {
-		hasProtocol,
-		protocol: hasProtocol
-			? (cleanedStr.split("://")[0] as "http" | "https")
-			: "none",
-	};
+	const protocol = PROTOCOL_REGEX.exec(cleanedStr)?.[1];
+	return protocol !== undefined
+		? { hasProtocol: true, protocol }
+		: { hasProtocol: false, protocol: "none" };
 }
 
 /**
@@ -394,30 +422,4 @@ export function safeStringArrayAssembler(
 		protocol,
 		hasDomain: domainData.hasDomain,
 	};
-}
-
-/**
- * Converts a safe string array to a URL string.
- * IMPORTANT: This function assumes the array is safe, meaning it has been processed by the safeStringArrayAssembler function.
- * The generated string is a potential valid URL but is not guaranteed to be valid.
- * @param urlArrayData - The data containing the array and whether it has a protocol.
- * @returns The URL string.
- * @example
- * safeStringArrayToURLString({ array: ["https://", "example.com", "blog"], hasProtocol: true, protocol: "https" });
- * // => "https://example.com/blog"
- * safeStringArrayToURLString({ array: ["example.com", "blog"], hasProtocol: false, protocol: "none" });
- * // => "example.com/blog"
- */
-export function safeStringArrayToURLString(
-	urlArrayData: IURLArrayData,
-): string {
-	const { array, hasProtocol } = urlArrayData;
-
-	if (hasProtocol) {
-		// If it has a protocol, we know the first fragment is the protocol, so we skip it
-		const slicedArray = array.length > 1 ? array.slice(1) : [];
-		return `${array.length > 0 ? array[0] : ""}${slicedArray.join("/")}`;
-	}
-
-	return array.join("/");
 }

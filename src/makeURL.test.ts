@@ -96,12 +96,14 @@ describe("makeURL", () => {
 
 	it("should throw an error if no params are provided", () => {
 		expect(() => {
+			// @ts-expect-error: invalid arguments on purpose
 			makeURL();
 		}).toThrow("makeURL must receive at least one string item");
 	});
 
 	it("should throw an error if no string params are provided", () => {
 		expect(() => {
+			// @ts-expect-error: invalid arguments on purpose
 			makeURL({
 				params: {
 					key: "value",
@@ -113,6 +115,7 @@ describe("makeURL", () => {
 	it("should throw an error if the first param provided is not a string", () => {
 		expect(() => {
 			makeURL(
+				// @ts-expect-error: invalid arguments on purpose
 				{
 					params: {
 						key: "value",
@@ -126,6 +129,7 @@ describe("makeURL", () => {
 	it("should throw an error if any other than the last param is a config object", () => {
 		expect(() => {
 			makeURL(
+				// @ts-expect-error: invalid arguments on purpose
 				"example.com",
 				{
 					params: {

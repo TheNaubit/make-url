@@ -1,372 +1,246 @@
 import {
+	BASE_DEFAULT_MAKE_URL_CONFIG,
+	getMakeURLDefaultConfig,
+	mergeConfig,
+	setMakeURLDefaultConfig,
+} from "./config.js";
+import { encodeDomain, encodeHash, toWellFormed } from "./lib/encode.js";
+import {
 	detectDomainInString,
-	encodeDomain,
 	safeStringArrayAssembler,
-	safeStringArrayToURLString,
 } from "./lib/helpers.js";
+import {
+	buildPathParamsRegex,
+	encodePathSegmentWithParams,
+} from "./lib/path-params.js";
+import { buildQuery, serializeValue } from "./lib/query.js";
 import type { IConfig, IParams } from "./types.js";
 
-// The protocol, host and port of a URL: "https://example.com:8080" or "//example.com"
-const ORIGIN_REGEX = /^(?:[a-z][a-z0-9+.-]*:)?\/\/[^/?#]*/i;
-
-function escapeRegExp(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-// Split a URL into its origin (protocol, host and port, when present) and the rest
-function splitOrigin(url: string): [string, string] {
-	const origin = ORIGIN_REGEX.exec(url)?.[0] ?? "";
-	return [origin, url.slice(origin.length)];
-}
-
-export const BASE_DEFAULT_MAKE_URL_CONFIG: IConfig = {
-	forceProtocol: "auto",
-	trailingSlash: "remove",
-	strict: false,
-	allowEmptyPathSegments: false,
-	arraySerializer: "repeat",
+export {
+	BASE_DEFAULT_MAKE_URL_CONFIG,
+	getMakeURLDefaultConfig,
+	setMakeURLDefaultConfig,
 };
 
-const DEFAULT_PARAMS: IParams<IConfig> = {
-	params: {},
-	hash: "",
-	config: BASE_DEFAULT_MAKE_URL_CONFIG,
-};
+/** The optional last argument of `makeURL`. */
+export type MakeURLOptions = Partial<IParams<Partial<IConfig>>>;
 
-let SET_CONFIG: IConfig = {
-	...DEFAULT_PARAMS.config,
-};
+/** The arguments of `makeURL`: at least one string fragment, optionally followed by the options object. */
+export type MakeURLArgs =
+	| [string, ...Array<string>]
+	| [string, ...Array<string>, MakeURLOptions];
 
-/**
- * Returns the default configuration for the `makeURL` function.
- * @returns The default configuration object.
- */
-export function getMakeURLDefaultConfig(): IConfig {
-	// Return a copy so the default config can only be changed with setMakeURLDefaultConfig
-	return { ...SET_CONFIG };
+// Protocols without "//" (the rest of the URL is kept as it is)
+const OPAQUE_PROTOCOL_REGEX = /^(?:mailto|tel|sms|urn|data):/i;
+
+// Two or more slashes, except the ones after a ":" (like a URL inside the path: "redirect/https://example.com")
+const EMPTY_PATH_SEGMENTS_REGEX = /(?<!:)\/{2,}/g;
+
+interface IParsedArgs {
+	fragments: Array<string>;
+	options: MakeURLOptions;
 }
 
-/**
- * Sets the makeURL default config params. This function is used to set the default config params for the makeURL function so you don't have to pass them every time you use it.
- *
- * @param config - The partial IConfig object containing the default config parameters to be set.
- * @example
- * setMakeURLParams({
- *   forceProtocol: "http",
- *   trailingSlash: "add",
- *   strict: false
- * })
- */
-export function setMakeURLDefaultConfig(config: Partial<IConfig>) {
-	SET_CONFIG = {
-		...DEFAULT_PARAMS.config,
-		...config,
-	};
+interface IInlineParts {
+	fragments: Array<string>;
+	query: string;
+	hash: string;
 }
 
-/**
- * Generates a URL based on the provided parameters and fragments.
- *
- * @param firstArg - The first argument can be a partial IParams object or a string. If it's a string, it will be used as the first fragment.
- * @param fragments - The rest of the fragments to be used in the URL.
- * @returns The generated URL.
- * @throws If the first argument is not a string or if the params object is not the last argument.
- * @throws If the generated URL is not a valid complete URL (meaning it contains a domain, something like https://example.com/ajajaja) and the strict mode is enabled.
- * @example
- * makeURL("example.com", "path", "to", "file") // "https://example.com/path/to/file"
- * makeURL({
- * queryParams: {
- *    key: "value"
- * }
- * }, "example.com", "path", "to", "file") // "https://example.com/path/to/file?key=value"
- * makeURL({
- * queryParams: {
- *    key: "value",
- *    otherKey: 123
- * }
- * }, "example.com", "path", "to/file/:otherKey") // "https://example.com/path/to/file/123?key=value"
- */
-export default function makeURL(
-	...args: Array<string | Partial<IParams<Partial<IConfig>>>>
-): string {
-	// We must make sure the function received at least one string item
-	if (args.length === 0 || (args.length > 0 && typeof args[0] !== "string")) {
+function parseArgs(args: ReadonlyArray<unknown>): IParsedArgs {
+	if (args.length === 0 || typeof args[0] !== "string") {
 		throw new Error("makeURL must receive at least one string item");
 	}
 
-	// The args array can contain any number of strings but only the last item can be a partial IParams object
-	let optionalObjectConfig:
-		| Partial<IParams<Partial<IConfig>>>
-		| { config: Record<string, never> } = { config: {} };
+	const lastArg = args[args.length - 1];
+	const hasOptions = typeof lastArg !== "string";
+	const fragmentArgs = hasOptions ? args.slice(0, -1) : args;
 
-	const stringFragments: string[] = [];
+	if (fragmentArgs.some((arg) => typeof arg !== "string")) {
+		throw new Error("Params config object argument must be the last argument");
+	}
 
-	args.forEach((arg, index) => {
-		if (typeof arg === "string") {
-			stringFragments.push(arg);
-		} else {
-			if (index !== args.length - 1) {
-				throw new Error(
-					"Params config object argument must be the last argument",
-				);
-			}
-			optionalObjectConfig = arg;
-		}
+	const fragments = (fragmentArgs as Array<string>).map((fragment, index) => {
+		// Whitespace around the whole URL is never wanted
+		const trimmedStart = index === 0 ? fragment.trimStart() : fragment;
+		return index === fragmentArgs.length - 1
+			? trimmedStart.trimEnd()
+			: trimmedStart;
 	});
-	// Now we have a save loaded args, we can load the config merging the config objects and clean the string fragments
-	const safeParams: IParams<IConfig> = {
-		...DEFAULT_PARAMS,
-		...optionalObjectConfig,
-		config: {
-			...SET_CONFIG,
-			...optionalObjectConfig?.config,
-		},
+
+	return {
+		fragments,
+		options: hasOptions && lastArg ? (lastArg as MakeURLOptions) : {},
 	};
+}
 
-	const safeStringArrayAssemblerData = safeStringArrayAssembler(
-		stringFragments,
-		safeParams.config,
-	);
+// A query ("?a=1") or a hash ("#top") can only be written in the last fragment
+function splitInlineQueryAndHash(fragments: Array<string>): IInlineParts {
+	const last = fragments[fragments.length - 1] ?? "";
+	const hashIndex = last.indexOf("#");
+	const beforeHash = hashIndex === -1 ? last : last.slice(0, hashIndex);
+	const queryIndex = beforeHash.indexOf("?");
 
-	// First, clean the fragments by removing leading and trailing slashes, replacing spaces with dashes and encoding invalid characters
-	safeStringArrayAssemblerData.array = safeStringArrayAssemblerData.array.map(
-		(fragment, index) => {
-			// Since we used the safeStringArrayAssembler function, we know that the first fragment is the protocol (if there is any)
-			if (index === 0 && safeStringArrayAssemblerData.hasProtocol) {
-				// Since it is a protocol, we can just return it as is
-				return fragment;
-			}
+	return {
+		fragments: [
+			...fragments.slice(0, -1),
+			queryIndex === -1 ? beforeHash : beforeHash.slice(0, queryIndex),
+		],
+		query: queryIndex === -1 ? "" : beforeHash.slice(queryIndex + 1),
+		hash: hashIndex === -1 ? "" : last.slice(hashIndex + 1),
+	};
+}
 
-			// The domain is not percent-encoded (that is not valid in a host): international domains are converted to punycode
-			const domainIndex = safeStringArrayAssemblerData.hasProtocol ? 1 : 0;
-			if (index === domainIndex && safeStringArrayAssemblerData.hasDomain) {
-				const encodedDomain = encodeDomain(fragment);
-				if (encodedDomain !== null) return encodedDomain;
-			}
+function resolveProtocol(
+	detectedProtocol: string,
+	hasDomain: boolean,
+	forceProtocol: IConfig["forceProtocol"],
+): string {
+	if (detectedProtocol !== "") return detectedProtocol;
 
-			// Since it does not contain a protocol, we need to clean it
-			return fragment
-				.split("/")
-				.map((f) => encodeURIComponent(f).replace(/%3A/g, ":"))
-				.join("/");
-		},
-	);
-
-	// Check if the first fragment includes a protocol and if it doesnt, add the forceProtocol protocol (only if it's not set to "none")
-	if (
-		!safeStringArrayAssemblerData.hasProtocol &&
-		safeParams.config.forceProtocol !== "none"
-	) {
-		// If the forceProtocol is set to "auto" or "auto-insecure", we need to check if the URL starts with a domain. If it does, we add the forceProtocol, if it doesn't, we don't add it
-		if (
-			safeParams.config.forceProtocol === "auto" ||
-			safeParams.config.forceProtocol === "auto-insecure"
-		) {
-			// If `forceProtocol`is `auto-insecure`, we use `http` instead of `https` (if the URL starts with a domain)
-			const shouldUseHttps = safeParams.config.forceProtocol === "auto";
-
-			const temporalDomainInfo = detectDomainInString(
-				`https://${safeStringArrayToURLString(safeStringArrayAssemblerData)}`,
-			); // Add some protocol to the URL to make sure the `detectDomainInString` function works as expected, since we now know that the temporalJoinedURL has no protocol
-
-			if (temporalDomainInfo.hasDomain) {
-				// Insert a new item at the beginning of the safeStringArrayAssemblerData array
-				safeStringArrayAssemblerData.array = [
-					`${shouldUseHttps ? "https" : "http"}://`,
-					...safeStringArrayAssemblerData.array,
-				];
-				safeStringArrayAssemblerData.hasProtocol = true;
-				safeStringArrayAssemblerData.protocol = shouldUseHttps
-					? "https"
-					: "http";
-			}
-		} else {
-			// Insert a new item at the beginning of the safeStringArrayAssemblerData array
-			safeStringArrayAssemblerData.array = [
-				`${safeParams.config.forceProtocol}://`,
-				...safeStringArrayAssemblerData.array,
-			];
-			safeStringArrayAssemblerData.hasProtocol = true;
-			safeStringArrayAssemblerData.protocol = safeParams.config.forceProtocol;
-		}
+	switch (forceProtocol) {
+		case "none":
+			return "";
+		case "auto":
+			return hasDomain ? "https://" : "";
+		case "auto-insecure":
+			return hasDomain ? "http://" : "";
+		default:
+			return `${forceProtocol}://`;
 	}
+}
 
-	// Generate the URL by joining the fragments
-	let url = safeStringArrayToURLString(safeStringArrayAssemblerData);
-
-	// If the trailingSlash is set to "add" and the URL does not end with a slash, add it
-	if (safeParams.config.trailingSlash === "add" && !url.endsWith("/")) {
-		url += "/";
+function applyTrailingSlash(
+	url: string,
+	trailingSlash: IConfig["trailingSlash"],
+): string {
+	if (trailingSlash === "add") {
+		return url.endsWith("/") ? url : `${url}/`;
 	}
-
-	// You might think this is not needed since we clean this in the fragments, but we need to check because if the user added two or more slashes in a row, those wouldn't be removed by the cleaning regex
-	// If the trailingSlash is set to "remove" and the URL ends with a slash, remove it
-	// Keep in mind this won't work in every case (for example, if the user added three or more slashes in a row, only the last one will be removed), but it's enough for our use case. If you need it to be even more strict, enable the strict mode in the config
-	if (safeParams.config.trailingSlash === "remove" && url.endsWith("/")) {
-		url = url.slice(0, -1);
+	// The root path ("/") and a protocol alone ("https://") keep their slashes
+	if (url.endsWith("/") && url !== "/" && !url.endsWith("://")) {
+		return url.slice(0, -1);
 	}
+	return url;
+}
 
-	// RFC 3986 allows empty path segments, but some servers don't accept them, so we need to remove them if the `allowEmptyPathSegments` is set to false (https://tools.ietf.org/html/rfc3986)
-	if (!safeParams.config.allowEmptyPathSegments) {
-		// We need to make sure there are no double (or more) slashes in the URL, so we replace them with a single slash
-		// Since the protocol has two slashes, we need to make sure we don't remove them, so we use a regex with a negative lookbehind
-		// Keep in mind that this still works if there is no protocol in the URL, so it's safe to use it in any case
-
-		// We need to support relative protocol so before doing the replacement, check if the url starts with `//` and if it does, extract it and add it back after the replacement
-		let relativeProtocol = "";
-
-		// If the protocol is detected as relative, there are two options
-		if (safeStringArrayAssemblerData.protocol === "relative") {
-			// One, the URL contains the relative protocol and also contains a
-			// valid domain (or subdomain)
-			if (safeStringArrayAssemblerData.hasProtocol) {
-				// Then we treat it as a URl with a valid relative protocol
-				relativeProtocol = "//";
-				// Or two, the URL contains the relative protocol but it does not contain
-				// a valid domain (or subdomain)
-			} else {
-				// Then we treat it as an absolute URL instead
-				relativeProtocol = "/";
-			}
-
-			// In any case, we remove the relative protocol from the URL
-			url = url.slice(2);
-		}
-
-		url = `${relativeProtocol}${url.replace(/(?<!:)\/{2,}/g, "/")}`;
-	}
-
-	// We accept any value as the value in the queryParams object, but the queryParams in the URL must be a string, so we need to cast it
-	const safeQueryParams: Record<
-		string,
-		{
-			value: string | Array<string>;
-			isArray: boolean;
-		}
-	> = {};
-
-	for (const entry of Object.entries(safeParams.params ?? {})) {
-		const [key, value] = entry;
-
-		// undefined and null mean "no value", so the param is not added
-		if (value === undefined || value === null) {
-			continue;
-		}
-
-		// We need to safe cast the value to a string, it could be anything: a string, a number, an object, etc... so sometimes the .toString() method will not work as expected
-		let safeValue: string | Array<string> = "";
-		let isValueArray = false;
-
-		if (typeof value === "string") {
-			safeValue = value;
-		} else if (typeof value === "number") {
-			safeValue = value.toString();
-		} else if (Array.isArray(value)) {
-			isValueArray = true;
-			if (safeParams.config.arraySerializer === "stringify") {
-				safeValue = JSON.stringify(value);
-			} else if (safeParams.config.arraySerializer === "repeat") {
-				// If the arraySerializer is set to "repeat", we need to repeat the key for each value in the array
-				safeValue = value;
-			} else {
-				// If the arraySerializer is set to "comma", we need to join the array with a comma
-				safeValue = value.join(",");
-			}
-		} else if (value instanceof Date) {
-			safeValue = Number.isNaN(value.getTime())
-				? String(value)
-				: value.toISOString();
-		} else if (typeof value === "object") {
-			safeValue = JSON.stringify(value);
-		} else {
-			safeValue = `${value}`;
-		}
-
-		safeQueryParams[key] = {
-			value: safeValue,
-			isArray: isValueArray,
-		};
-	}
-
-	const queryParamsToAdd = new URLSearchParams();
-
-	// We support URLs with replaceable fields, so if one of the keys in queryParams is found in the URL in the format `:<key>`, it will be replaced with the value of the key in queryParams and removed from the queryParams object
-	// If the key is not replaced, it is meant to be added as a query key, so we add it to the queryParamsToAdd object
-	for (const entry of Object.entries(safeQueryParams)) {
-		const [key, item] = entry;
-
-		// If the value is an array we can not replace it in the URL, so we skip the URL replacement and add the query param to the queryParamsToAdd object
-		if (item.isArray) {
-			// If the array is an array of objects, we are in the "repeat" mode, so we need to add each object as a query param
-			if (Array.isArray(item.value)) {
-				for (const value of item.value) {
-					queryParamsToAdd.append(key, value);
-				}
-			} else {
-				// If it is not an array of objects, we can add the array as a single query param
-				queryParamsToAdd.append(key, item.value);
-			}
-			continue;
-		}
-
-		let foundAnyMatch = false;
-		// We need to replace it in all the cases it appears in the URL, so we use a regex with the global flag
-		// If we found any match, we set the foundAnyMatch variable to true
-		// If we didn't find any match, we don't do anything
-		// The key is escaped (it could contain regular expression characters) and must not be followed by a word character, so ":id" does not match the start of ":identifier"
-		const regex = new RegExp(`:${escapeRegExp(key)}(?![A-Za-z0-9_])`, "g");
-		const encodedValue = encodeURIComponent(item.value as string); // We know that is .isArray is false (which we already checked), the value type is always a string
-
-		// The protocol, host and port are never replaced (a param named "8080" must not replace the port)
-		const [origin, path] = splitOrigin(url);
-		url = `${origin}${path.replace(regex, () => {
-			foundAnyMatch = true;
-			return encodedValue;
-		})}`;
-
-		if (foundAnyMatch) {
-			// We remove the key from the queryParams object
-			delete safeQueryParams[key];
-		} else {
-			// If we didn't find any match, we add the key to the queryParamsToAdd object
-			queryParamsToAdd.append(key, item.value as string); // Note that we dont call encodeURIComponent here because the URLSearchParams object does it for us and if we did it twice, the resulting string would be double encoded, causing issues
-		}
-	}
-
-	// Now we have to add the remaining query params to the URL
-	const queryParamsToAddString = queryParamsToAdd.toString();
-
-	// Add the query params to the URL if there are any
-	if (queryParamsToAddString) {
-		url += `?${queryParamsToAddString}`;
-	}
-
-	// Now we have to add the hash params to the URL
-	// Add the hash params to the URL if there are any
+function buildHash(optionHash: unknown, inlineHash: string): string {
 	// A leading "#" is ignored, since it is added anyway
-	const safeHashParamValue: string = (safeParams.hash ?? "")
+	const hash = String(optionHash ?? "")
 		.trim()
 		.replace(/^#/, "");
-	if (safeHashParamValue !== "") {
-		url += `#${encodeURIComponent(safeHashParamValue)}`;
+
+	if (hash !== "") return `#${encodeHash(hash, false)}`;
+	return inlineHash !== "" ? `#${encodeHash(inlineHash, true)}` : "";
+}
+
+/**
+ * Generates a URL based on the provided fragments and options.
+ *
+ * @param args - Any number of string fragments, optionally followed by an options object (`params`, `hash` and `config`).
+ * @returns The generated URL.
+ * @throws If the first argument is not a string or if the options object is not the last argument.
+ * @throws If the generated URL is not a valid complete URL (meaning it contains a domain, something like https://example.com/path) and the strict mode is enabled.
+ * @example
+ * makeURL("example.com", "path", "to", "file") // "https://example.com/path/to/file"
+ * makeURL("example.com", "users/:id", { params: { id: 1, tab: "posts" } }) // "https://example.com/users/1?tab=posts"
+ * makeURL("https://example.com", "docs", { hash: "install" }) // "https://example.com/docs#install"
+ */
+export default function makeURL(...args: MakeURLArgs): string {
+	const { fragments, options } = parseArgs(args);
+	const config = mergeConfig(getMakeURLDefaultConfig(), options.config);
+	const inline = splitInlineQueryAndHash(fragments);
+
+	const params = Object.entries(
+		typeof options.params === "object" && options.params !== null
+			? options.params
+			: {},
+	);
+
+	// Only scalar values can be used in the path (arrays always go to the query)
+	const pathParamValues = new Map(
+		params.flatMap(([key, value]): Array<[string, string]> => {
+			const serialized = Array.isArray(value) ? null : serializeValue(value);
+			return serialized === null ? [] : [[key, serialized]];
+		}),
+	);
+	const pathParamsRegex = buildPathParamsRegex([...pathParamValues.keys()]);
+	const replacedKeys = new Set<string>();
+
+	const encodeFragment = (fragment: string): string =>
+		fragment
+			.split("/")
+			.map((segment) =>
+				encodePathSegmentWithParams(
+					segment,
+					pathParamValues,
+					pathParamsRegex,
+					(key) => replacedKeys.add(key),
+				),
+			)
+			.join("/");
+
+	let url: string;
+
+	if (OPAQUE_PROTOCOL_REGEX.test(inline.fragments[0] ?? "")) {
+		// Like "mailto:me@example.com": no domain, no protocol to add and no slashes to clean
+		url = encodeURI(toWellFormed(inline.fragments.join("/")));
+	} else {
+		const assembled = safeStringArrayAssembler(inline.fragments, config);
+		const detectedProtocol = assembled.hasProtocol
+			? (assembled.array[0] ?? "")
+			: "";
+		const [rawHost, ...pathFragments] = assembled.hasDomain
+			? assembled.array.slice(assembled.hasProtocol ? 1 : 0)
+			: ["", ...assembled.array.slice(assembled.hasProtocol ? 1 : 0)];
+
+		// The slash right after the host is the separator: "https://example.com/" and "test" give "https://example.com/test"
+		const firstPathFragment = pathFragments[0] ?? "";
+		const cleanedPathFragments =
+			assembled.hasDomain && firstPathFragment.startsWith("/")
+				? [firstPathFragment.slice(1), ...pathFragments.slice(1)].filter(
+						(fragment, index) => index > 0 || fragment !== "",
+					)
+				: pathFragments;
+
+		const protocol = resolveProtocol(
+			detectedProtocol,
+			assembled.hasDomain,
+			config.forceProtocol,
+		);
+		const host =
+			rawHost === ""
+				? ""
+				: (encodeDomain(rawHost ?? "") ?? encodeFragment(rawHost ?? ""));
+
+		const joinedPath = cleanedPathFragments.map(encodeFragment).join("/");
+		const collapsedPath = joinedPath.replace(EMPTY_PATH_SEGMENTS_REGEX, "/");
+		// Without empty path segments, the slashes between the host and the path are collapsed too
+		const path = config.allowEmptyPathSegments
+			? joinedPath
+			: host === ""
+				? collapsedPath
+				: collapsedPath.replace(/^\/+/, "");
+
+		// Without a host, a protocol is followed by the path directly (a forced protocol on "/blog" gives "http://blog")
+		const joined =
+			host === ""
+				? `${protocol}${protocol === "" ? path : path.replace(/^\/+/, "")}`
+				: `${protocol}${host}${path === "" ? "" : `/${path}`}`;
+		url = applyTrailingSlash(joined, config.trailingSlash);
 	}
 
-	// Finally, validate if the URL is valid (only if the strict mode is enabled)
-	// Important: If we are using a relative URL or an absolute URL without host, this will throw an error, so we should not use the `strict` mode in those cases
-	if (safeParams.config.strict) {
-		try {
-			// This function checks if it is a valid URL and also if it contains a valid
-			// domain (or subdomain, etc...), so we can be sure that it is a valid URL
-			const testResultData = detectDomainInString(url);
+	const query = buildQuery(
+		inline.query,
+		params.filter(([key]) => !replacedKeys.has(key)),
+		config.arraySerializer,
+	);
+	const fullURL = `${url}${query === "" ? "" : `?${query}`}${buildHash(options.hash, inline.hash)}`;
 
-			if (!testResultData.hasDomain) {
-				throw null;
-			}
-		} catch {
-			throw new Error(`The generated URL is not valid: ${url}`);
-		}
+	// In strict mode the URL must be a complete URL with a valid domain
+	if (config.strict && !detectDomainInString(fullURL).hasDomain) {
+		throw new Error(`The generated URL is not valid: ${fullURL}`);
 	}
 
-	// And return the URL
-	return url;
+	return fullURL;
 }

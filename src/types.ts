@@ -9,7 +9,8 @@ export type TTrailingSlash = "add" | "remove";
 
 export type TArraySerializer = "stringify" | "repeat" | "comma";
 
-export type TProtocol = "http" | "https" | "relative" | "none";
+// "relative" is "//example.com", "none" is no protocol, any other value is the protocol name (like "https" or "wss")
+export type TProtocol = "http" | "https" | "relative" | "none" | (string & {});
 
 export interface IConfig {
 	forceProtocol: TForceProtocol;
