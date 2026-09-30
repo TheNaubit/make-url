@@ -77,17 +77,23 @@ function parseArgs(args: ReadonlyArray<unknown>): IParsedArgs {
 	};
 }
 
-// A query ("?a=1") or a hash ("#top") can only be written in the last fragment
+// A query ("?a=1") or a hash ("#top") can only be written in the last non-empty fragment
 function splitInlineQueryAndHash(fragments: Array<string>): IInlineParts {
-	const last = fragments[fragments.length - 1] ?? "";
+	const lastIndex = fragments.findLastIndex(
+		(fragment) => fragment.trim() !== "",
+	);
+	if (lastIndex === -1) return { fragments, query: "", hash: "" };
+
+	const last = fragments[lastIndex] as string;
 	const hashIndex = last.indexOf("#");
 	const beforeHash = hashIndex === -1 ? last : last.slice(0, hashIndex);
 	const queryIndex = beforeHash.indexOf("?");
 
 	return {
 		fragments: [
-			...fragments.slice(0, -1),
+			...fragments.slice(0, lastIndex),
 			queryIndex === -1 ? beforeHash : beforeHash.slice(0, queryIndex),
+			...fragments.slice(lastIndex + 1),
 		],
 		query: queryIndex === -1 ? "" : beforeHash.slice(queryIndex + 1),
 		hash: hashIndex === -1 ? "" : last.slice(hashIndex + 1),
@@ -137,6 +143,18 @@ function buildHash(optionHash: unknown, inlineHash: string): string {
 	return inlineHash !== "" ? `#${encodeHash(inlineHash, true)}` : "";
 }
 
+// A URL with an opaque protocol ("mailto:", "tel:") without query and hash
+function buildOpaqueURL(
+	fragments: Array<string>,
+	config: IConfig,
+	encodeFragment: (fragment: string) => string,
+): string {
+	const joined = fragments.map(encodeFragment).join("/");
+	return config.allowEmptyPathSegments
+		? joined
+		: joined.replace(EMPTY_PATH_SEGMENTS_REGEX, "/");
+}
+
 // The URL without query and hash: protocol, host and path
 function buildBaseURL(
 	fragments: Array<string>,
@@ -180,7 +198,7 @@ function buildBaseURL(
 	// Without a host, a protocol is followed by the path directly (a forced protocol on "/blog" gives "http://blog")
 	const joined = hasHost
 		? `${protocol}${host}${path === "" ? "" : `/${path}`}`
-		: `${protocol}${protocol === "" ? path : path.replace(/^\/+/, "")}`;
+		: `${protocol}${protocol === "" ? path : path.replace(/^\/+/, protocol.toLowerCase() === "file://" ? "/" : "")}`;
 
 	return applyTrailingSlash(joined, config.trailingSlash);
 }
@@ -232,8 +250,16 @@ export default function makeURL(...args: MakeURLArgs): string {
 			.join("/");
 
 	const url = OPAQUE_PROTOCOL_REGEX.test(inline.fragments[0] ?? "")
-		? // Like "mailto:me@example.com": no host, no protocol to add and no slashes to clean
-			inline.fragments.map(encodeOpaque).join("/")
+		? // Like "mailto:me@example.com": no host and no protocol to add
+			buildOpaqueURL(inline.fragments, config, (fragment) =>
+				encodePathSegmentWithParams(
+					fragment,
+					pathParamValues,
+					pathParamsRegex,
+					(key) => replacedKeys.add(key),
+					encodeOpaque,
+				),
+			)
 		: buildBaseURL(inline.fragments, config, encodeFragment);
 
 	const query = buildQuery(

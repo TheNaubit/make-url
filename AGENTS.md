@@ -63,6 +63,8 @@ src/
 
 - `@semantic-release/changelog` 7 and `@semantic-release/git` 11 need Node.js 24.15 or later. They are pinned to 6.0.3 and 10.0.1 (same features) so that contributors on older Node.js 24 releases can install.
 - Tags up to `v1.10.17` were created by the previous release tool (annotated tags). semantic-release reads them fine for versioning.
-- Only http, https, ws, wss and ftp can be split across fragments ("https:" + "//x.com"). Other protocols must be in one fragment, so "redirect" + "https://other.com" stays a path.
-- After a host, only top-level domain labels (".com", ".co.uk") and ports (":8080") are glued to it: ".well-known" stays a path segment.
+- Only http, https, ws, wss and ftp can be split across fragments ("https:" + "//x.com"). Other protocols, and the relative protocol "//", must be in one fragment, so "redirect" + "https://other.com" stays a path and "/" + "/evil.com" is not a link to evil.com.
+- An incomplete host takes top-level domain labels (".com", ".co.uk") and ports from the next fragments ("example" + ".com"). A complete host only takes a port that keeps it valid: ".env", ".git" or ".well-known" after "example.com" stay path segments, and so does ".com" after "www.example".
+- The inline query and hash are read from the last non-empty fragment. Empty fragments before a host are ignored.
+- `file:///path` keeps its empty host.
 - Domain detection is a heuristic: a hostname needs a dot and a last label that is not a common file extension (`index.html` is a path), or be an IP address, `[IPv6]` or `localhost`.

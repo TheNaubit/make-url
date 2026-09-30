@@ -88,7 +88,7 @@ make-url was inspired by [urlcat](https://www.npmjs.com/package/urlcat), and it 
 | International domain: `https://münchen.de` | `https://münchen.de/x` | `https://münchen.de/x` | `https://xn--mnchen-3ya.de/x` (punycode, valid everywhere) |
 | URL validation | None | None | `strict: true` throws if the result is not a complete URL |
 | Global defaults | No | No | `setMakeURLDefaultConfig` |
-| Size (minified + gzipped, dependencies included) | 14.4 kB (it depends on `qs`) | 0.4 kB (joins strings only) | 2.7 kB, zero dependencies |
+| Size (minified + gzipped, dependencies included) | 14.4 kB (it depends on `qs`) | 0.4 kB (joins strings only) | 2.9 kB, zero dependencies |
 | Last release | January 2023 | March 2022 | Maintained |
 
 ### Features

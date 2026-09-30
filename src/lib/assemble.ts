@@ -15,7 +15,7 @@ const PROTOCOL_REGEX = /^(?:([a-z][a-z0-9+.-]*):)?\/\//i;
 // Only these protocols can be split across fragments ("https:" + "//example.com"): any other protocol must be written in a single fragment, so "redirect" + "https://other.com" is not the protocol "redirecthttps"
 const SPLITTABLE_PROTOCOL_REGEX = /^(?:https?|wss?|ftp)$/i;
 
-// A fragment that continues a host: top-level domain labels (".com", ".co.uk") and/or a port (":8080")
+// A fragment that continues an incomplete host: top-level domain labels (".com", ".co.uk") and/or a port (":8080")
 const HOST_CONTINUATION_REGEX =
 	/^(?:(?:\.(?:[a-z]{2,63}|xn--[a-z0-9-]+))+(?::\d+)?|:\d+)(?=$|[/?#])/i;
 
@@ -58,7 +58,8 @@ function takeProtocol(fragments: Array<string>): {
 	const { rest, consumed } = consume(fragments, match[0].length);
 	const scheme = match[1];
 
-	if (consumed > 1 && scheme && !SPLITTABLE_PROTOCOL_REGEX.test(scheme)) {
+	// A relative protocol ("//") can not be split either: "/" + "/evil.com" is a path, not a link to evil.com
+	if (consumed > 1 && !(scheme && SPLITTABLE_PROTOCOL_REGEX.test(scheme))) {
 		return { protocol: "", rest: fragments };
 	}
 
@@ -84,6 +85,18 @@ export function assembleURL(fragments: Array<string>): IAssembledURL {
 	const { protocol, rest } = takeProtocol(fragments);
 	const first = rest[0] ?? "";
 
+	// Empty fragments before a host are ignored ("" + "example.com" with allowEmptyPathSegments)
+	const firstNonEmpty = rest.findIndex((fragment) => fragment !== "");
+	if (protocol === "" && firstNonEmpty > 0) {
+		const withoutLeadingEmpty = assembleURL(rest.slice(firstNonEmpty));
+		if (withoutLeadingEmpty.host !== "") return withoutLeadingEmpty;
+	}
+
+	// "file:///path" has an empty host
+	if (/^file:\/\/$/i.test(protocol)) {
+		return { protocol, host: "", path: rest };
+	}
+
 	// Without a protocol, a path ("/blog", "./blog", "../blog") never starts with a host
 	const noHost: IAssembledURL =
 		protocol === "//"
@@ -95,7 +108,8 @@ export function assembleURL(fragments: Array<string>): IAssembledURL {
 	// After a protocol, extra slashes are ignored ("https:///example.com")
 	const source = protocol === "" ? first : first.replace(/^\/+/, "");
 	const hostEnd = source.search(/[/?#]/);
-	let host = hostEnd === -1 ? source : source.slice(0, hostEnd);
+	// Whitespace is never part of a host
+	let host = (hostEnd === -1 ? source : source.slice(0, hostEnd)).trim();
 	let tail = hostEnd === -1 ? "" : source.slice(hostEnd);
 	let nextIndex = 1;
 
@@ -105,6 +119,14 @@ export function assembleURL(fragments: Array<string>): IAssembledURL {
 		while (rest[candidate] === "") candidate += 1;
 		const continuation = HOST_CONTINUATION_REGEX.exec(rest[candidate] ?? "");
 		if (!continuation) break;
+
+		// A complete host only takes a port (and only if it stays valid): ".env" or ".well-known" after "example.com" are paths
+		if (
+			isValidHost(host) &&
+			!(continuation[0].startsWith(":") && isValidHost(host + continuation[0]))
+		) {
+			break;
+		}
 
 		host += continuation[0];
 		tail = (rest[candidate] as string).slice(continuation[0].length);

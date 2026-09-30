@@ -1,9 +1,9 @@
 {
 	"extends": [],
 	"compilerOptions": {
-		"target": "ES2020",
+		"target": "ES2022",
 		"module": "ESNext",
-		"lib": ["ES2020", "DOM", "DOM.Iterable"],
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
 		"types": ["node"],
 		// Skip the type checking for declaration files to improve performance.
 		"skipLibCheck": true,

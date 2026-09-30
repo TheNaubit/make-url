@@ -30,6 +30,7 @@ export function buildPathParamsRegex(keys: Array<string>): RegExp | null {
  * @param values - The values of the params that can be replaced.
  * @param regex - The regular expression built with `buildPathParamsRegex`.
  * @param onReplace - Called with the key of each replaced param.
+ * @param encodeLiteral - How the literal parts are encoded.
  * @returns The encoded segment.
  */
 export function encodePathSegmentWithParams(
@@ -37,19 +38,20 @@ export function encodePathSegmentWithParams(
 	values: ReadonlyMap<string, string>,
 	regex: RegExp | null,
 	onReplace: (key: string) => void,
+	encodeLiteral: (text: string) => string = encodePathSegment,
 ): string {
-	if (regex === null) return encodePathSegment(segment);
+	if (regex === null) return encodeLiteral(segment);
 
 	let encoded = "";
 	let lastIndex = 0;
 
 	for (const match of segment.matchAll(regex)) {
 		const key = match[1] as string;
-		encoded += encodePathSegment(segment.slice(lastIndex, match.index));
+		encoded += encodeLiteral(segment.slice(lastIndex, match.index));
 		encoded += encodeValue(values.get(key) ?? "");
 		lastIndex = match.index + match[0].length;
 		onReplace(key);
 	}
 
-	return encoded + encodePathSegment(segment.slice(lastIndex));
+	return encoded + encodeLiteral(segment.slice(lastIndex));
 }

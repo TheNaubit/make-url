@@ -5,8 +5,8 @@ const LONE_SURROGATE_REGEX =
 // A percent-escape that encodeURIComponent encoded again ("%20" -> "%2520")
 const DOUBLE_ENCODED_ESCAPE_REGEX = /%25([0-9A-Fa-f]{2})/g;
 
-// Only printable ASCII characters
-const ASCII_REGEX = /^[\x20-\x7e]*$/;
+// The characters of an ASCII host: a domain, an IPv4 or [IPv6] address and a port
+const ASCII_HOST_REGEX = /^[A-Za-z0-9.\-:[\]]*$/;
 
 /**
  * Replaces lone UTF-16 surrogates with U+FFFD, like `String.prototype.toWellFormed`, so the string can be encoded.
@@ -51,7 +51,7 @@ export function encodeInlineQuery(query: string): string {
 }
 
 /**
- * Encodes a URL hash. "/", "?", ":" and "@" are kept since they are valid in a hash (and used by client-side routers, like "#/users/1?tab=a").
+ * Encodes a URL hash. "/", "?", ":" and "@" are kept since they are valid in a hash (and used by client-side routers, like "#/users/1?tab"). Other reserved characters like "=" and "&" are encoded.
  *
  * @param hash - The hash, without the leading "#".
  * @param keepEscapes - Whether existing percent-escapes are kept (for a hash written in a fragment).
@@ -77,18 +77,19 @@ export function encodeHash(hash: string, keepEscapes: boolean): string {
  * // => "xn--mnchen-3ya.de:8080"
  */
 export function encodeDomain(domain: string): string | null {
-	// ASCII domains are kept as they are (including their case)
-	if (ASCII_REGEX.test(domain)) return domain;
-
-	// Credentials ("user:password@") are percent-encoded, the host is converted to punycode
+	// Credentials ("user:password@") are percent-encoded (existing escapes are kept)
 	const atIndex = domain.lastIndexOf("@");
 	const credentials =
 		atIndex === -1
 			? ""
 			: `${domain.slice(0, atIndex).split(":").map(encodePathSegment).join(":")}@`;
+	const host = domain.slice(atIndex + 1);
+
+	// ASCII hosts are kept as they are (including their case), international ones are converted to punycode
+	if (ASCII_HOST_REGEX.test(host)) return `${credentials}${host}`;
 
 	try {
-		return `${credentials}${new URL(`https://${toWellFormed(domain.slice(atIndex + 1))}`).host}`;
+		return `${credentials}${new URL(`https://${toWellFormed(host)}`).host}`;
 	} catch {
 		return null;
 	}
