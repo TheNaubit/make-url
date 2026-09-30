@@ -107,3 +107,26 @@ describe("opaque protocols split across fragments", () => {
 		expect(makeURL("tel:", ":n", { params: { n: 1 } })).toBe("tel:1");
 	});
 });
+
+describe("low-severity hardening", () => {
+	it("never builds an authority in opaque URLs", () => {
+		expect(makeURL("mailto:", "/", ":p", { params: { p: "evil.com" } })).toBe(
+			"mailto:/evil.com",
+		);
+		expect(makeURL("mailto:me@x.com", "a:", "b")).toBe("mailto:me@x.com/a:/b");
+	});
+
+	it("ends the host at a backslash, like URL parsers", () => {
+		const url = makeURL("example.com\\@evil.com", "x");
+		expect(new URL(url).host).toBe("example.com");
+		expect(makeURL("https://example.com\\evil", "x")).toBe(
+			"https://example.com/%5Cevil/x",
+		);
+	});
+
+	it("does not let a value decide whether '//' stays in the path", () => {
+		expect(makeURL(":p:", "/", ":q", { params: { p: "1", q: "x" } })).toBe(
+			"1:/x",
+		);
+	});
+});

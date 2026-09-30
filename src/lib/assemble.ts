@@ -115,7 +115,8 @@ export function assembleURL(fragments: Array<string>): IAssembledURL {
 
 	// After a protocol, extra slashes are ignored ("https:///example.com")
 	const source = protocol === "" ? first : first.replace(/^\/+/, "");
-	const hostEnd = source.search(/[/?#]/);
+	// Like URL parsers, a backslash also ends the host
+	const hostEnd = source.search(/[/?#\\]/);
 	// Whitespace is never part of a host
 	let host = (hostEnd === -1 ? source : source.slice(0, hostEnd)).trim();
 	let tail = hostEnd === -1 ? "" : source.slice(hostEnd);

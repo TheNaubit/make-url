@@ -36,6 +36,7 @@ export type MakeURLArgs =
 
 // Protocols without "//" (the rest of the URL is kept as it is)
 const OPAQUE_PROTOCOL_REGEX = /^(?:mailto|tel|sms|urn|data):/i;
+const OPAQUE_PROTOCOL_ONLY_REGEX = /^(?:mailto|tel|sms|urn|data):$/i;
 
 // Two or more slashes, except a run right after a ":" (a URL inside the path: "redirect/https://example.com" or "file:///etc")
 const EMPTY_PATH_SEGMENTS_REGEX = /(?<![:/])\/{2,}/g;
@@ -162,6 +163,7 @@ function pathWithoutHost(protocol: string, path: string): string {
 	// Without protocol, "//" would make the path a protocol-relative URL ("" + "/evil.com" is not a link to evil.com), and a first segment like "https:" would be read as a protocol (RFC 3986, section 4.2), so its ":" is encoded
 	return path
 		.replace(/^\/{2,}/, "/")
+		.replace(/^([^/]*:)\/{2,}/, "$1/")
 		.replace(
 			PATH_PROTOCOL_REGEX,
 			(_, name: string, slashes: string) =>
@@ -181,14 +183,15 @@ function buildOpaqueURL(
 		.map(encodeFragment)
 		.reduce(
 			(url, fragment) =>
-				url === "" || url.endsWith(":")
+				url === "" || OPAQUE_PROTOCOL_ONLY_REGEX.test(url)
 					? `${url}${fragment}`
 					: `${url}/${fragment}`,
 			"",
 		);
+	// No "//" at all: it would create an authority ("mailto:" + "/" + "/evil.com")
 	return config.allowEmptyPathSegments
 		? joined
-		: joined.replace(EMPTY_PATH_SEGMENTS_REGEX, "/");
+		: joined.replace(/\/{2,}/g, "/");
 }
 
 // The URL without query and hash: protocol, host and path
