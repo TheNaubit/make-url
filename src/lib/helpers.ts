@@ -3,7 +3,7 @@ import type {
 	IDomainData,
 	IProtocolData,
 	IURLArrayData,
-} from "../types";
+} from "../types.js";
 
 /**
  * Detects the domain in a given string.

@@ -2,8 +2,8 @@ import {
 	detectDomainInString,
 	safeStringArrayAssembler,
 	safeStringArrayToURLString,
-} from "./lib/helpers";
-import type { IConfig, IParams } from "./types";
+} from "./lib/helpers.js";
+import type { IConfig, IParams } from "./types.js";
 
 export const BASE_DEFAULT_MAKE_URL_CONFIG: IConfig = {
 	forceProtocol: "auto",

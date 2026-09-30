@@ -1,15 +1,15 @@
 {
   "name": "@nauverse/make-url",
-  "description": "🪄 A tiny URL builder library for TypeScript.",
+  "description": "\ud83e\ude84 A tiny URL builder library for TypeScript.",
   "author": {
     "name": "Albert Adler | @albertadler",
     "url": "https://albertadler.com"
   },
   "license": "MIT",
-  "homepage": "https://github.com/TheNaubit/make-url",
+  "homepage": "https://github.com/TheNaubit/make-url#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/TheNaubit/make-url.git"
+    "url": "git+https://github.com/TheNaubit/make-url.git"
   },
   "bugs": {
     "url": "https://github.com/TheNaubit/make-url/issues"
@@ -32,7 +32,7 @@
   "module": "./dist/make-url.js",
   "types": "./dist/index.d.ts",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.0.0"
   },
   "exports": {
     ".": {
@@ -50,7 +50,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && vite build",
+    "build": "tsc --noEmit && vite build && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -59,15 +60,34 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.3",
-    "@commitlint/cli": "19.5.0",
-    "@commitlint/config-conventional": "19.5.0",
-    "@types/node": "20.16.10",
-    "@vitest/coverage-v8": "1.6.0",
-    "husky": "9.1.6",
-    "typescript": "5.6.2",
-    "vite": "5.4.8",
-    "vite-plugin-dts": "3.9.1",
-    "vitest": "1.6.0"
+    "@biomejs/biome": "2.5.14",
+    "@commitlint/cli": "21.2.3",
+    "@commitlint/config-conventional": "21.2.3",
+    "@semantic-release/changelog": "6.0.3",
+    "@semantic-release/git": "10.0.1",
+    "@types/node": "24.19.0",
+    "@vitest/coverage-v8": "5.0.2",
+    "husky": "9.1.7",
+    "semantic-release": "25.0.9",
+    "typescript": "7.0.2",
+    "vite": "8.3.1",
+    "vitest": "5.0.2"
+  },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^22.14.0 || >=24.10.0",
+      "onFail": "error"
+    },
+    "packageManager": {
+      "name": "npm",
+      "version": ">=10.9.0",
+      "onFail": "warn"
+    }
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }

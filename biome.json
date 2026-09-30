@@ -1,35 +1,24 @@
 {
-	"$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
-	"vcs": { "clientKind": "git", "enabled": true, "useIgnoreFile": true },
-	"organizeImports": { "enabled": true },
+	"$schema": "https://biomejs.dev/schemas/2.5.14/schema.json",
+	"assist": { "actions": { "source": { "organizeImports": "on" } } },
+	"files": {
+		"includes": ["**", "!**/*.json"]
+	},
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true
-		},
-		"ignore": [
-			".vscode/*",
-			".idea/*",
-			".github/*",
-			".husky/*",
-			"dist/*",
-			"build/*",
-			"**/.cache",
-			"**/public",
-			"**/node_modules",
-			"**/*.esm.js",
-			"**/prettier.config.js",
-			"**/next.config.js",
-			"**/next.config.mjs",
-			"**/postcss.config.js",
-			"**/tailwind.config.ts",
-			"**/lint-staged.config.js",
-			".next/*",
-			"**/sst-env.d.ts",
-			"**/dist/",
-			"**/node_modules/",
-			"**/coverage/",
-			"**/vite.config.ts"
-		]
+			"preset": "recommended",
+			"correctness": {
+				"noUnusedImports": "error"
+			},
+			"suspicious": {
+				"noConsole": "error"
+			}
+		}
 	}
 }

@@ -4,8 +4,7 @@
 		"target": "ES2020",
 		"module": "ESNext",
 		"lib": ["ES2020", "DOM", "DOM.Iterable"],
-		// The types defined in "vite/client" are included in global scope.
-		"types": ["vite/client"],
+		"types": ["node"],
 		// Skip the type checking for declaration files to improve performance.
 		"skipLibCheck": true,
 		// "declarationMap" need to be enabled to let Vite generates source map files.
