@@ -46,22 +46,30 @@ export function encodePathSegmentWithParams(
 	if (regex === null) return encodeLiteral(segment);
 
 	let encoded = "";
+	let literalOnly = "";
 	let lastIndex = 0;
 	let lastKey: string | null = null;
 
 	for (const match of segment.matchAll(regex)) {
 		const key = match[1] as string;
-		encoded += encodeLiteral(segment.slice(lastIndex, match.index));
-		encoded += encodeValue(values.get(key) ?? "");
+		const literal = encodeLiteral(segment.slice(lastIndex, match.index));
+		encoded += literal + encodeValue(values.get(key) ?? "");
+		literalOnly += literal;
 		lastIndex = match.index + match[0].length;
 		lastKey = key;
 		onReplace(key);
 	}
 
-	encoded += encodeLiteral(segment.slice(lastIndex));
+	const rest = encodeLiteral(segment.slice(lastIndex));
+	encoded += rest;
+	literalOnly += rest;
 
-	// A value must never create a "." or ".." segment: URL parsers resolve them (also "%2e"), so a value like ".." would climb the path
-	if (lastKey !== null && DOT_SEGMENT_REGEX.test(encoded)) {
+	// A value must never create a "." or ".." segment: URL parsers resolve them (also "%2e"), so a value like ".." would climb the path. Dots written by the developer (an empty value next to a literal ".") are fine
+	if (
+		lastKey !== null &&
+		encoded !== literalOnly &&
+		DOT_SEGMENT_REGEX.test(encoded)
+	) {
 		throw new Error(
 			`The value of the param "${lastKey}" can not be "." or ".." in the path`,
 		);

@@ -37,6 +37,7 @@ export type MakeURLArgs =
 // Protocols without "//" (the rest of the URL is kept as it is)
 const OPAQUE_PROTOCOL_REGEX = /^(?:mailto|tel|sms|urn|data):/i;
 const OPAQUE_PROTOCOL_ONLY_REGEX = /^(?:mailto|tel|sms|urn|data):$/i;
+const OPAQUE_AUTHORITY_REGEX = /^((?:mailto|tel|sms|urn|data):)\/{2,}/i;
 
 // Two or more slashes, except a run right after a ":" (a URL inside the path: "redirect/https://example.com" or "file:///etc")
 const EMPTY_PATH_SEGMENTS_REGEX = /(?<![:/])\/{2,}/g;
@@ -188,10 +189,11 @@ function buildOpaqueURL(
 					: `${url}/${fragment}`,
 			"",
 		);
-	// No "//" at all: it would create an authority ("mailto:" + "/" + "/evil.com")
+	// "//" after the protocol would create an authority ("data:" + "//" + "evil.com"), and no "//" at all without empty path segments
+	const withoutAuthority = joined.replace(OPAQUE_AUTHORITY_REGEX, "$1/");
 	return config.allowEmptyPathSegments
-		? joined
-		: joined.replace(/\/{2,}/g, "/");
+		? withoutAuthority
+		: withoutAuthority.replace(/\/{2,}/g, "/");
 }
 
 // The URL without query and hash: protocol, host and path
@@ -239,6 +241,11 @@ function buildBaseURL(
 		: "";
 
 	const joinedPath = pathFragments.map(encodeFragment).join("/");
+	// A relative path stays relative, even when an empty value removes its first segment (":p" + "x" with p "")
+	const isRelativePath =
+		!hasHost &&
+		assembled.protocol === "" &&
+		!pathFragments.join("/").startsWith("/");
 	const collapsedPath = joinedPath.replace(EMPTY_PATH_SEGMENTS_REGEX, "/");
 	// Without empty path segments, the slashes between the host and the path are collapsed too
 	const path = config.allowEmptyPathSegments
@@ -249,7 +256,7 @@ function buildBaseURL(
 
 	const joined = hasHost
 		? `${protocol}${host}${path === "" ? "" : `/${path}`}`
-		: `${protocol}${pathWithoutHost(protocol, path)}`;
+		: `${protocol}${pathWithoutHost(protocol, isRelativePath && protocol === "" ? path.replace(/^\/+/, "") : path)}`;
 
 	return applyTrailingSlash(joined, config.trailingSlash);
 }

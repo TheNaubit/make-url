@@ -130,3 +130,22 @@ describe("low-severity hardening", () => {
 		);
 	});
 });
+
+describe("values that change nothing", () => {
+	it("never builds an authority after an opaque protocol", () => {
+		expect(
+			makeURL("data:", "//:p", {
+				params: { p: "evil.com" },
+				config: { allowEmptyPathSegments: true },
+			}),
+		).toBe("data:/evil.com");
+	});
+
+	it("keeps a relative path relative when a value is empty", () => {
+		expect(makeURL(":p", "x/y", { params: { p: "" } })).toBe("x/y");
+	});
+
+	it("does not throw when an empty value leaves a literal dot segment", () => {
+		expect(makeURL("a", ".:p", "b", { params: { p: "" } })).toBe("a/./b");
+	});
+});
