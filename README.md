@@ -1,14 +1,16 @@
 <h1 align="center">
-  🪄 make-url
+  make-url
   <br>
 </h1>
 
-<h4 align="center">A tiny URL builder library for TypeScript.</h4>
+<h4 align="center">A tiny, dependency-free URL builder for TypeScript and JavaScript that gets the edge cases right.</h4>
 
 <p align="center">
-  <a href="https://github.com/TheNaubit/make-url/actions">
-    <img src="https://github.com/TheNaubit/make-url/actions/workflows/release.yml/badge.svg"
-         alt="Build Status">
+  <a href="https://github.com/TheNaubit/make-url/actions/workflows/ci.yml">
+    <img src="https://github.com/TheNaubit/make-url/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status">
+  </a>
+  <a href="https://github.com/TheNaubit/make-url/actions/workflows/release.yml">
+    <img src="https://github.com/TheNaubit/make-url/actions/workflows/release.yml/badge.svg?branch=main" alt="Release status">
   </a>
   <a href="https://www.npmjs.com/package/@nauverse/make-url">
     <img src="https://img.shields.io/npm/v/@nauverse/make-url.svg?style=flat" alt="npm version">
@@ -16,901 +18,439 @@
   <a href="https://bundlephobia.com/result?p=@nauverse/make-url">
     <img src="https://img.shields.io/bundlephobia/minzip/%40nauverse/make-url" alt="minzipped size">
   </a>
+  <a href="https://github.com/TheNaubit/make-url/blob/main/LICENSE">
+    <img src="https://img.shields.io/npm/l/@nauverse/make-url.svg?style=flat" alt="license">
+  </a>
 </p>
 
 <p align="center">
-  <a href="#what">What?</a> •
-  <a href="#why">Why?</a> •
-  <a href="#how">How?</a> •
+  <a href="#tldr">tl;dr</a> •
+  <a href="#why-make-url">Why make-url?</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#guide">Guide</a> •
+  <a href="#configuration">Configuration</a> •
   <a href="#typescript">TypeScript</a> •
-  <a href="#guide-and-examples">Guide and examples</a> •
   <a href="#help">Help</a> •
   <a href="#contribute">Contribute</a>
 </p>
 
 ## tl;dr
-If you just want to try and you don't want to read this guide right now (although you should in the future if you decide to use the library), you can start quickly by:
 
-### 1. Installing the dependency:
 ```bash
-npm install --save @nauverse/make-url
+npm install @nauverse/make-url
 ```
 
-### 2. Checking this example of use:
 ~~~ts
 import { makeURL } from "@nauverse/make-url";
 
-makeURL("https://api.example.com/", "/:id/:param2/:id///", {
-  params: {
-    id: 1,
-    param2: "678"
-  }
+makeURL("https://api.example.com/", "/users/:id/posts/", {
+  params: { id: 42, limit: 10, tags: ["news", "tech"] },
+  hash: "comments",
 });
-// https://api.example.com/1/678/1
+// https://api.example.com/users/42/posts?limit=10&tags=news&tags=tech#comments
 ~~~
-> I added too many slashes intentionally to showcase they can be removed automatically (you also have an option to disable that)
 
-If you want to see more examples, jump to [here](#full-examples).
+Pass any number of fragments, then optionally an options object. `:id` is replaced in the path, every other param becomes a query param, everything is encoded, and the slashes are cleaned up.
 
-### 3. You are done! 🪄
-Feel free to test and explore and if later on you need more guidance, read the whole guide and ask in the GitHub repo.
+## Why make-url?
 
-## What?
+Building URLs by hand looks easy until the details show up:
 
-*make-url* is heavily inspired in the awesome [urlcat](https://www.npmjs.com/package/urlcat). It is a tiny JavaScript library that makes building URLs very convenient and prevents common mistakes. It is fully type-safe and highly configurable.
+~~~js
+const API_URL = "https://api.example.com/";
 
-<br>
-<p align="center">
-  <img src="https://raw.githubusercontent.com/balazsbotond/urlcat/d5834df094b4e436ebf3ba3bf015857798f29675/docs/urlcat-basic-usage.svg#gh-light-mode-only">
-  <img src="https://raw.githubusercontent.com/balazsbotond/urlcat/d5834df094b4e436ebf3ba3bf015857798f29675/docs/urlcat-basic-usage-dark.svg#gh-dark-mode-only">
-</p>
-<p align="center">
-<i>Although the image above is from the `urlcat` package, this package behaves very similar so it is a good way to showcase its functionality</i>
-</p>
+// Wrong: "https://api.example.com//users/..." and nothing is encoded
+const url = `${API_URL}/users/${id}/posts?limit=${limit}&search=${search}`;
+~~~
+
+The built-in `URL` and `URLSearchParams` classes encode the query, but you still have to encode every path value yourself and handle the slashes between the base URL and the path. That is what make-url does for you, in one call:
+
+~~~ts
+makeURL("https://api.example.com/", "/users/:id/posts", {
+  params: { id: "a/b", limit: 10, search: "café & more" },
+});
+// https://api.example.com/users/a%2Fb/posts?limit=10&search=caf%C3%A9+%26+more
+~~~
+
+### make-url vs urlcat and url-join
+
+make-url was inspired by [urlcat](https://www.npmjs.com/package/urlcat), and it covers more cases with a smaller bundle. Every output below was produced by running both libraries (urlcat 3.1.0, url-join 5.0.0, make-url 1.x):
+
+| Case | urlcat | url-join | make-url |
+| ---- | ------ | -------- | -------- |
+| More than two fragments: `("https://api.example.com", "v1", "users")` | `https://api.example.com/v1?0=u&1=s&2=e&3=r&4=s` (the third argument is read as params) | `https://api.example.com/v1/users` | `https://api.example.com/v1/users` |
+| Hash | No option (a `#` written in the path is not encoded: `#a b`) | No option (same) | `hash: "install guide"` gives `#install%20guide` |
+| Domain without protocol: `("example.com", "x")` | `example.com/x` | `example.com/x` | `https://example.com/x` (configurable with `forceProtocol`) |
+| Trailing slash | Kept as written | Kept as written | Removed or added, your choice (`trailingSlash`) |
+| Arrays in the query: `tags: ["a", "b"]` | `tags%5B0%5D=a&tags%5B1%5D=b` | No params support | `tags=a&tags=b`, or `tags=a%2Cb`, or JSON (`arraySerializer`) |
+| Objects in the query: `f: { a: 1 }` | Bracket notation (`f%5Ba%5D=1`) | No params support | JSON (`f=%7B%22a%22%3A1%7D`) |
+| Empty path param: `(":id", { id: "" })` | Throws | No params support | Removes the empty segment |
+| International domain: `https://münchen.de` | `https://münchen.de/x` | `https://münchen.de/x` | `https://xn--mnchen-3ya.de/x` (punycode, valid everywhere) |
+| URL validation | None | None | `strict: true` throws if the result is not a complete URL |
+| Global defaults | No | No | `setMakeURLDefaultConfig` |
+| Size (minified + gzipped, dependencies included) | 14.4 kB (it depends on `qs`) | 0.4 kB (joins strings only) | 2.7 kB, zero dependencies |
+| Last release | January 2023 | March 2022 | Maintained |
 
 ### Features
 
-  <table>
-  <thead>
-    <tr>
-      <th><strong>v1</strong></th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>0️⃣ ‎ Zero dependencies</td>
-    </tr>
-    <tr>
-      <td>👌 1kB <a href="https://bundlephobia.com/package/@nauverse/make-url@latest">minified and gzipped</a></td>
-    </tr>
-    <tr>
-      <td>🔒 Reliable. Even when you pass really messed up strings, it finds a way to build a valid URL (just check the tests for some examples)</td>
-    </tr>
-    <tr>
-      <td>✍️ TypeScript types provided</td>
-    </tr>
-    <tr>
-      <td>🛟 Safe escaping everywhere</td>
-    </tr>
-    <tr>
-      <td>🧠 Smart concatenating</td>
-    </tr>
-    <tr>
-      <td>❓ Support for query parameters (add them in any format and they will be safely escaped and added)</td>
-    </tr>
-    <tr>
-      <td>#️⃣ ‎ Support for hash parameter</td>
-    </tr>
-    <tr>
-      <td>🤓 Smart trailing slash handling (and fully configurable)</td>
-    </tr>
-    <tr>
-      <td>🌍 Global default config option (if you use always the same settings, you can make it constant, instead of having to specify them on each function call)</td>
-    </tr>
-    <tr>
-      <td>🔗 URL type detection (if it is a full URL, a relative URL, an absolute URL...)</td>
-    </tr>
-    <tr>
-      <td>🚔 Protocol enforcing settings (plus a smart mode so it handles it for you)</td>
-    </tr>
-    <tr>
-      <td>🎛️ Enable or disable removing extra slashes (so it supports RFC 3986)</td>
-    </tr>
-    <tr>
-      <td>📋 Query parameters support arrays, with three modes: stringify, repeat key and comma-separated</td>
-    </tr>
-    <tr>
-      <td>🧘 It also supports the relative protocol (`//example.com/my-page`)</td>
-    </tr>
-    <tr>
-      <td>✅ Production ready</td>
-    </tr>
-  </tbody>
-  </table>
+- Zero dependencies, ESM and CommonJS builds, TypeScript types included
+- Any number of fragments: the protocol, the domain and the path can be split however you like
+- URL params (`:id`) replaced in the path, never in the host or the port
+- Query params of any type: strings, numbers, booleans, dates, objects and arrays (three array formats)
+- Hash support, including client-side routes (`#/users/1?tab=a`)
+- A query or hash already written in the last fragment is kept
+- Safe encoding everywhere, without encoding existing escapes (`%20`) twice
+- Smart protocol handling: adds `https://` only when there is a domain, and keeps `wss://`, `myapp://`, `mailto:` or the relative protocol (`//example.com`)
+- Hosts: domains, international domains (punycode), IPv4, IPv6 (`[::1]`), `localhost`, ports and credentials (`user:password@`)
+- Configurable trailing slash, empty path segments and validation (`strict`)
+- Global defaults so you do not repeat your config
 
-## Why?
-
-When a dev wants to call an API or build an URL, they must make sure to check lots of things: adding parameters in the URL path, adding query parameters, maybe adding hash parameters, making sure it is a valid URL, mayberemoving trailing slashes and much, much more:
-
-~~~js
-const API_URL = 'https://api.example.com/';
-
-function getUserPosts(id, blogId, limit, offset) {
-  const requestUrl = `${API_URL}/users/${id}/blogs/${blogId}/posts?limit=${limit}&offset=${offset}`;
-  // send HTTP request
-}
-~~~
-
-As you can see, this minimal example is already rather hard to read. It is also incorrect:
-
-- I forgot that there was a trailing slash at the end of the `API_URL` constant so this resulted in a URL containing duplicate slashes (`https://api.example.com//users`).
-- The embedded values need to be escaped using `encodeURIComponent`
-
-I can use the built-in `URL` class to prevent duplicate slashes and `URLSearchParams` to escape the query string. But I still need to escape all path parameters manually.
-
-~~~js
-const API_URL = 'https://api.example.com/';
-
-function getUserPosts(id, blogId, limit, offset) {
-  const escapedId = encodeURIComponent(id);
-  const escapedBlogId = encodeURIComponent(blogId);
-  const path = `/users/${escapedId}/blogs/${escapedBlogId}`;
-  const url = new URL(path, API_URL);
-  url.search = new URLSearchParams({ limit, offset });
-  const requestUrl = url.href;
-  // send HTTP request
-}
-~~~
-
-Something like that should be an easy task, but it can be a real pain. That is why this library exists.
-
-And you might wonder: why, if you are inspired in `urlcat`, don't just use that library?
-
-Well, that library allows you to generate complete URLs with some protections but... it was not enough safe for me (and I also needed to support other URL formats like relative URLs).
-
-~~~js
-const API_URL = 'https://api.example.com/';
-const SOME_SLUG = 'hey';
-
-function getUserPosts(id, limit, offset) {
-  const requestUrl = makeURL('api.example.com', SOME_SLUG, 'users/:id/posts', {
-      params: { 
-        id,
-        limit,
-        offset 
-      }
-    });
-  // The URL will be:
-  // https://api.example.com/hey/users/<id_value>/?limit=<limit_value>&offset=<offset_value>
-  // send HTTP request
-}
-~~~
-
-## How?
-
-### Install
-
-Currently, the package is distributed via NPM.
+## Installation
 
 ```bash
-npm install --save @nauverse/make-url
+npm install @nauverse/make-url
 ```
 
-### Usage with Node
-
-Node 18 and above are officially supported, though you may have luck using it with an earlier Node version.
-Since the code uses the `URL` and `URLSearchParams` classes internally, which aren't available below Node v10, the library is known not to work with those versions.
-
-The package comes with CJS and ESM modules.
-
-## TypeScript
-
-This library provides its own type definitions. "It just works", no need to install anything from `@types`.
-
-## Guide and examples
-> A good contribution for this repo would be a more detailed guide about how to use it.
-
-The most important function that this package offers is `makeURL`.
-You can call with with any amount of string values and optionally at the end with a config object.
-
-A config object has the following interface:
 ~~~ts
-export interface IParams {
-  params: Record<string, unknown>;
-  hash: string;
-  config: {
-    forceProtocol: "http" | "https" | "none" | "auto" | "auto-insecure";
-    trailingSlash: "add" | "remove";
-    strict: boolean;
-    allowEmptyPathSegments: boolean;
-    arraySerializer: "stringify" | "repeat" | "comma";
-  };
-}
+// ESM
+import { makeURL } from "@nauverse/make-url";
+// CommonJS
+const { makeURL } = require("@nauverse/make-url");
 ~~~
-Every field in the object is optional.
 
-`params` is an optional object that contains key-value pairs. If in the generated URL is there any match of `:<key>`, being `<key>` any of the keys in that object, the matches will be replaced with the value of their respective keys.
-If they are not replaced in the URL, they will be added to the URL as query parameters.
+It runs in every modern browser and in Node.js 22 and later, since it only uses the standard `URL` and `URLSearchParams` APIs.
 
-Let's see some examples:
-### makeURL with only query parameters
+## Guide
+
+`makeURL` takes one or more string fragments, optionally followed by an options object with three optional fields: `params`, `hash` and `config`. The options object must be the last argument.
+
+### Fragments
+
+The fragments are joined with `/`, and repeated slashes are removed:
+
 ~~~ts
-makeURL("https://example.com", {
-  params: {
-    id: 12,
-    name: "test"
-  }
+makeURL("https://example.com/", "/blog/", "//posts/", "1");
+// https://example.com/blog/posts/1
+~~~
+
+A fragment can contain several path segments (`"blog/posts"`), and the protocol, the domain and the port can be split across fragments:
+
+~~~ts
+makeURL("https://example.com", ":8080", "api");
+// https://example.com:8080/api
+~~~
+
+Without a domain, you get a relative or an absolute path:
+
+~~~ts
+makeURL("blog", "posts/1");
+// blog/posts/1
+~~~
+
+~~~ts
+makeURL("/blog", "posts/1");
+// /blog/posts/1
+~~~
+
+### URL params and query params
+
+Each key of `params` found in the path as `:<key>` is replaced by its encoded value. The other params are added to the query:
+
+~~~ts
+makeURL("https://example.com", "users/:id", {
+  params: { id: 12, tab: "posts" },
 });
-// https://example.com?id=12&name=test
+// https://example.com/users/12?tab=posts
 ~~~
 
-### makeURL with query parameters and also URL params
+A key only matches whole names: `:id` does not match the start of `:identifier`.
+
 ~~~ts
-makeURL("https://example.com", ":id/", {
-  params: {
-    id: 12,
-    name: "test"
-  }
+makeURL("https://example.com", ":identifier/:id", {
+  params: { id: 1, identifier: "abc" },
 });
-// https://example.com/12?name=test
+// https://example.com/abc/1
 ~~~
 
-> Notice that the `params` values can be of any type. I used in the examples `string` and `number` types, but you can use anything (including objects) and it will be always safely casted. Don't worry if the string contains invalid characters, everything is safely encoded in this library!
+Values can be of any type. `undefined` and `null` are skipped, dates are sent as ISO strings and objects as JSON:
 
----
-
-`hash` is another optional field containg a string.
->  Don't worry if the string contains invalid characters, everything is safely encoded in this library!
-
-Let's see one example:
-### makeURL with a hash parameter
 ~~~ts
-makeURL("https://example.com", {
-  hash: "test"
+makeURL("https://example.com", "search", {
+  params: { q: "café", page: 2, draft: false, from: new Date(0), missing: undefined },
 });
-// https://example.com#test
+// https://example.com/search?q=caf%C3%A9&page=2&draft=false&from=1970-01-01T00%3A00%3A00.000Z
 ~~~
 
----
+An empty value removes its path segment:
 
-Now it is time to talk about the `config` object.
+~~~ts
+makeURL("https://example.com", "users/:id/posts", {
+  params: { id: "" },
+});
+// https://example.com/users/posts
+~~~
+
+Arrays always go to the query (see [`arraySerializer`](#arrayserializer)), even when the path contains their key.
+
+### Query and hash in the fragments
+
+A query or a hash written in the last fragment is kept. The params are added after the existing query, and the `hash` option replaces the existing hash:
+
+~~~ts
+makeURL("https://example.com/search?sort=new", {
+  params: { q: "shoes" },
+});
+// https://example.com/search?sort=new&q=shoes
+~~~
+
+In any other fragment, `?` and `#` are encoded, since they can not be part of a query or a hash there.
+
+### Hash
+
+~~~ts
+makeURL("https://example.com", "docs", { hash: "getting started" });
+// https://example.com/docs#getting%20started
+~~~
+
+A leading `#` is ignored, and `/`, `?`, `:` and `@` are kept, so client-side routes work:
+
+~~~ts
+makeURL("https://example.com", { hash: "#/users/1?tab" });
+// https://example.com#/users/1?tab
+~~~
+
+### Hosts
+
+International domains are converted to punycode. IPv6 addresses, `localhost`, ports and credentials are supported:
+
+~~~ts
+makeURL("münchen.de", "straße");
+// https://xn--mnchen-3ya.de/stra%C3%9Fe
+~~~
+
+~~~ts
+makeURL("http://[::1]:8080", "api");
+// http://[::1]:8080/api
+~~~
+
+~~~ts
+makeURL("http://localhost:3000", "api", "users");
+// http://localhost:3000/api/users
+~~~
+
+~~~ts
+makeURL("https://user:password@example.com", "private");
+// https://user:password@example.com/private
+~~~
+
+Relative paths and file names are not mistaken for domains:
+
+~~~ts
+makeURL("./docs", "index.html");
+// ./docs/index.html
+~~~
+
+### Protocols
+
+Any protocol followed by `//` is kept, and so are `mailto:`, `tel:`, `sms:`, `urn:` and `data:`:
+
+~~~ts
+makeURL("wss://example.com", "socket");
+// wss://example.com/socket
+~~~
+
+~~~ts
+makeURL("mailto:hello@example.com", { params: { subject: "Hi there" } });
+// mailto:hello@example.com?subject=Hi+there
+~~~
+
+The relative protocol (`//`) is kept when it is followed by a domain. Otherwise the URL becomes an absolute path:
+
+~~~ts
+makeURL("//example.com", "test/a");
+// //example.com/test/a
+~~~
+
+~~~ts
+makeURL("//example", "test/a");
+// /example/test/a
+~~~
+
+When there is no protocol, [`forceProtocol`](#forceprotocol) decides what to add.
+
+## Configuration
+
+| Option | Values | Default | What it does |
+| ------ | ------ | ------- | ------------ |
+| [`forceProtocol`](#forceprotocol) | `"auto"`, `"auto-insecure"`, `"http"`, `"https"`, `"none"` | `"auto"` | The protocol added when the URL has none |
+| [`trailingSlash`](#trailingslash) | `"remove"`, `"add"` | `"remove"` | Whether the path ends with a slash |
+| [`allowEmptyPathSegments`](#allowemptypathsegments) | `true`, `false` | `false` | Whether repeated slashes are kept |
+| [`arraySerializer`](#arrayserializer) | `"repeat"`, `"comma"`, `"stringify"` | `"repeat"` | How arrays are added to the query |
+| [`strict`](#strict) | `true`, `false` | `false` | Whether to throw when the result is not a complete URL |
+
+Pass them in `config` for one call, or set them for every call with [`setMakeURLDefaultConfig`](#global-defaults). Options set to `undefined` keep their default value.
+
+### `forceProtocol`
+
+It only applies when the first fragment has no protocol. A protocol you write is always kept.
+
+- `auto`: adds `https://` if the URL starts with a domain.
+- `auto-insecure`: adds `http://` if the URL starts with a domain.
+- `https` or `http`: always adds that protocol.
+- `none`: never adds a protocol.
+
+~~~ts
+makeURL("example.com", "blog", { config: { forceProtocol: "auto" } });
+// https://example.com/blog
+~~~
+
+~~~ts
+makeURL("blog", "post/1", { config: { forceProtocol: "auto" } });
+// blog/post/1
+~~~
+
+~~~ts
+makeURL("example.com", "blog", { config: { forceProtocol: "auto-insecure" } });
+// http://example.com/blog
+~~~
+
+~~~ts
+makeURL("blog", "post/1", { config: { forceProtocol: "https" } });
+// https://blog/post/1
+~~~
+
+~~~ts
+makeURL("example.com", "blog", { config: { forceProtocol: "none" } });
+// example.com/blog
+~~~
+
+### `trailingSlash`
+
+~~~ts
+makeURL("https://example.com", "test/a", { config: { trailingSlash: "add" } });
+// https://example.com/test/a/
+~~~
+
+~~~ts
+makeURL("https://example.com", "test/a/", { config: { trailingSlash: "remove" } });
+// https://example.com/test/a
+~~~
+
 ### `allowEmptyPathSegments`
-> By default, it is set to `false`
 
-This setting is made to support the RFC 3986. That RFC allows empty path segments in URLs (for example, https://example.com//users////2).
+[RFC 3986](https://www.rfc-editor.org/rfc/rfc3986) allows empty path segments (`https://example.com//users`), but most servers do not expect them, so they are removed by default. Set it to `true` to keep every slash you write:
 
-By default, this library has this option disabled but you can enable it in any function call you need it or globally by using the `setMakeURLDefaultConfig` function.
-
-Some examples:
-#### makeURL with `allowEmptyPathSegments: true`
 ~~~ts
 makeURL("https://example.com", "//test///a", {
-  config: {
-    allowEmptyPathSegments: true
-  }
+  config: { allowEmptyPathSegments: true },
 });
 // https://example.com//test///a
 ~~~
 
-#### makeURL with `allowEmptyPathSegments: false`
 ~~~ts
 makeURL("https://example.com", "//test///a", {
-  config: {
-    allowEmptyPathSegments: false
-  }
+  config: { allowEmptyPathSegments: false },
 });
 // https://example.com/test/a
 ~~~
 
 ### `arraySerializer`
-> By default, it is set to `repeat`
 
-Arrays are a special kind of data, specially when sending them as query parameters to the server. There are many ways to handle them and we try to support all of them.
-
-The default mode used is `repeat` but you can change it in any function call you need it or globally by using the `setMakeURLDefaultConfig` function.
-
-There are three possible values: `repeat`, `comma` and `stringify`. Each of them specify how to handle the arrays. Let's see some examples:
-#### makeURL with `arraySerializer: 'repeat'`
 ~~~ts
-makeURL("https://example.com", "/test", {
-  params: {
-    arr: ['a', 'b', 'c']
-  },
-  config: {
-    arraySerializer: 'repeat'
-  }
+makeURL("https://example.com", "test", {
+  params: { arr: ["a", "b", "c"] },
+  config: { arraySerializer: "repeat" },
 });
 // https://example.com/test?arr=a&arr=b&arr=c
 ~~~
 
-#### makeURL with `arraySerializer: 'stringify'`
 ~~~ts
-makeURL("https://example.com", "/test", {
-  params: {
-    arr: ['a', 'b', 'c']
-  },
-  config: {
-    arraySerializer: 'repeat'
-  }
-});
-// https://example.com/test?arr=%5B%22a%22%2C%22b%22%2C%22c%22%5D
-~~~
-
-#### makeURL with `arraySerializer: 'comma'`
-~~~ts
-makeURL("https://example.com", "/test", {
-  params: {
-    arr: ['a', 'b', 'c']
-  },
-  config: {
-    arraySerializer: 'comma'
-  }
+makeURL("https://example.com", "test", {
+  params: { arr: ["a", "b", "c"] },
+  config: { arraySerializer: "comma" },
 });
 // https://example.com/test?arr=a%2Cb%2Cc
 ~~~
 
-> Important: Arrays are not supported for URL variables (no matter the `mode` you use), so they won't be replaced there but added as a query parameter. See one example below:
-#### makeURL with `arraySerializer: 'comma'` with array as URL variable
 ~~~ts
-makeURL("https://example.com", "/test/:arr", {
-  params: {
-    arr: ['a', 'b', 'c']
-  },
-  config: {
-    arraySerializer: 'comma'
-  }
+makeURL("https://example.com", "test", {
+  params: { arr: ["a", "b", "c"] },
+  config: { arraySerializer: "stringify" },
 });
-// https://example.com/test/:arr?arr=a%2Cb%2Cc <- Notice that we can not replace arrays in URL variables
+// https://example.com/test?arr=%5B%22a%22%2C%22b%22%2C%22c%22%5D
 ~~~
 
-
-### `trailingSlash`
-> By default, it is set to `add`
-
-Some servers expect trailing slashes, some does not support it. With this setting, you can configure the behaviour however you want.
-
-By default, this library has this option set to `remove` but you can change it in any function call you need it or globally by using the `setMakeURLDefaultConfig` function.
-
-It has two possible values: `add` and `remove`.
-
-Some examples:
-#### makeURL with `trailingSlash: 'add'`
-~~~ts
-makeURL("https://example.com", "/test/a", {
-  config: {
-    trailingSlash: 'add'
-  }
-});
-// https://example.com/test/a/
-~~~
-
-#### makeURL with `trailingSlash: 'remove'`
-~~~ts
-makeURL("https://example.com", "/test/a/", {
-  config: {
-    trailingSlash: 'remove'
-  }
-});
-// https://example.com/test/a
-~~~
-
-### `forceProtocol`
-> By default, it is set to `auto`
-
-It has 5 possible values: `http`, `https`, `none`, `auto`, `auto-insecure`.
-
-`http` will always add the `http://` to the URL if it does not contain a protocol, <b>without checking if the URL is a full URL, a relative one or an absolute one</b>:
-#### makeURL with `forceProtocol: 'http'` and a full URL without protocol
-~~~ts
-makeURL("example.com", "/test/a", {
-  config: {
-    forceProtocol: 'http'
-  }
-});
-// http://example.com/test/a
-~~~
-
-#### makeURL with `forceProtocol: 'http'` and a full URL with protocol
-~~~ts
-makeURL("https://example.com", "/test/a", {
-  config: {
-    forceProtocol: 'http'
-  }
-});
-// https://example.com/test/a
-~~~
-
-#### makeURL with `forceProtocol: 'http'` and a relative URL
-~~~ts
-makeURL("test/a", {
-  config: {
-    forceProtocol: 'http'
-  }
-});
-// http://test/a
-~~~
-
-#### makeURL with `forceProtocol: 'http'` and an absolute URL
-~~~ts
-makeURL("/test/a", {
-  config: {
-    forceProtocol: 'http'
-  }
-});
-// http://test/a
-~~~
-
-> This means you should only use `forceProtocol: 'http'` if you are 100% sure the URLs you will build with that function will be always full URLs. If not, you should use `auto`, `auto-insecure` or `none`.
-
----
-
-`https` will always add the `https://` to the URL if it does not contain a protocol, <b>without checking if the URL is a full URL, a relative one or an absolute one</b>:
-#### makeURL with `forceProtocol: 'https'` and a full URL without protocol
-~~~ts
-makeURL("example.com", "/test/a", {
-  config: {
-    forceProtocol: 'https'
-  }
-});
-// https://example.com/test/a
-~~~
-
-#### makeURL with `forceProtocol: 'https'` and a full URL with protocol
-~~~ts
-makeURL("http://example.com", "/test/a", {
-  config: {
-    forceProtocol: 'https'
-  }
-});
-// http://example.com/test/a
-~~~
-
-#### makeURL with `forceProtocol: 'https'` and a relative URL
-~~~ts
-makeURL("test/a", {
-  config: {
-    forceProtocol: 'https'
-  }
-});
-// https://test/a
-~~~
-
-#### makeURL with `forceProtocol: 'https'` and an absolute URL
-~~~ts
-makeURL("/test/a", {
-  config: {
-    forceProtocol: 'https'
-  }
-});
-// https://test/a
-~~~
-
-> This means you should only use `forceProtocol: 'https'` if you are 100% sure the URLs you will build with that function will be always full URLs. If not, you should use `auto`, `auto-insecure` or `none`.
-
----
-`none` will not add any protocol to the URL, no matter if it has one, it doesn't have one, it is a full URL, it is a relative URL, an absolute one...:
-#### makeURL with `forceProtocol: 'none'` and a full URL without protocol
-~~~ts
-makeURL("example.com", "/test/a", {
-  config: {
-    forceProtocol: 'none'
-  }
-});
-// example.com/test/a
-~~~
-
-#### makeURL with `forceProtocol: 'none'` and a full URL with protocol
-~~~ts
-makeURL("https://example.com", "/test/a", {
-  config: {
-    forceProtocol: 'none'
-  }
-});
-// https://example.com/test/a
-~~~
-
-#### makeURL with `forceProtocol: 'none'` and a relative URL
-~~~ts
-makeURL("test/a", {
-  config: {
-    forceProtocol: 'none'
-  }
-});
-// test/a
-~~~
-
-#### makeURL with `forceProtocol: 'none'` and an absolute URL
-~~~ts
-makeURL("/test/a", {
-  config: {
-    forceProtocol: 'none'
-  }
-});
-// /test/a
-~~~
----
-
-`auto` is the safe and smart option. It will add the `https://` protocol if the generated URL is a full URL (containing a domain) and it doesn't have already a protocol. In any other case, it won't add anything to it. This is the recommened mode in production if you want to have something to "set and forget":
-#### makeURL with `forceProtocol: 'auto'` and a full URL without protocol
-~~~ts
-makeURL("example.com", "/test/a", {
-  config: {
-    forceProtocol: 'auto'
-  }
-});
-// https://example.com/test/a
-~~~
-
-#### makeURL with `forceProtocol: 'auto'` and a full URL with protocol
-~~~ts
-makeURL("http://example.com", "/test/a", {
-  config: {
-    forceProtocol: 'auto'
-  }
-});
-// http://example.com/test/a
-~~~
-
-#### makeURL with `forceProtocol: 'auto'` and a relative URL
-~~~ts
-makeURL("test/a", {
-  config: {
-    forceProtocol: 'auto'
-  }
-});
-// test/a
-~~~
-
-#### makeURL with `forceProtocol: 'auto'` and an absolute URL
-~~~ts
-makeURL("/test/a", {
-  config: {
-    forceProtocol: 'auto'
-  }
-});
-// /test/a
-~~~
----
-
-`auto-insecure` is an alternative smart option to `auto`. It will add the `http://` protocol if the generated URL is a full URL (containing a domain) and it doesn't have already a protocol. In any other case, it won't add anything to it. 
-
-It is called `insecure` not because it is not safe to use but because it uses the `http` protocol, so I prefer to make it noticeable for the devs.
-
-#### makeURL with `forceProtocol: 'auto-insecure'` and a full URL without protocol
-~~~ts
-makeURL("example.com", "/test/a", {
-  config: {
-    forceProtocol: 'auto-insecure'
-  }
-});
-// http://example.com/test/a
-~~~
-
-#### makeURL with `forceProtocol: 'auto-insecure'` and a full URL with protocol
-~~~ts
-makeURL("https://example.com", "/test/a", {
-  config: {
-    forceProtocol: 'auto-insecure'
-  }
-});
-// https://example.com/test/a
-~~~
-
-#### makeURL with `forceProtocol: 'auto-insecure'` and a relative URL
-~~~ts
-makeURL("test/a", {
-  config: {
-    forceProtocol: 'auto-insecure'
-  }
-});
-// test/a
-~~~
-
-#### makeURL with `forceProtocol: 'auto-insecure'` and an absolute URL
-~~~ts
-makeURL("/test/a", {
-  config: {
-    forceProtocol: 'auto-insecure'
-  }
-});
-// /test/a
-~~~
-> Although it is not recommended to use `http` in production; if you want to use `auto` in your local environment and you have issues with the `https`, you could use a setting like: `forceProtocol: process.env.NODE_ENV === "production" ? "auto" : "auto-insecure"`
+The items are serialized like single values, and `undefined` and `null` items are skipped. An empty array adds nothing with `repeat`, an empty value with `comma` and `[]` with `stringify`.
 
 ### `strict`
-> By default, it is set to `false`
 
-It is a boolean, so it can be `true` or `false`. I set it to `false` by default to provide the most flexible option by default.
+With `strict: true`, `makeURL` throws if the result is not a complete URL with a valid host (a domain, an IP address or `localhost`). Relative URLs, absolute paths and the relative protocol are rejected:
 
-This option enforces that the final URL string you get from calling `makeURL` is a totally valid complete URL (like `https://example.com/my/path/`). If it is not, it will throw an error, so you can catch it and handle the exception.
-
-The drawback is that relative and absolute URLs won't work with this option set to `true`, since those URLs are not "fully valid URLs".
-
-#### makeURL with `strict: true` and an full URL
 ~~~ts
-makeURL("example.com", "/test/a", {
-  config: {
-    strict: true
-  }
-});
-// https://example.com/test/a
+makeURL("example.com", "blog", { config: { strict: true } });
+// https://example.com/blog
 ~~~
 
-#### makeURL with `strict: true` and an full URL without protocol
 ~~~ts
-makeURL("example.com", "/test/a", {
-  config: {
-    strict: true,
-    forceProtocol: "none"
-  }
-});
-// Throws an error
+makeURL("/blog", "post/1", { config: { strict: true } });
+// Throws: The generated URL is not valid: /blog/post/1
 ~~~
 
-#### makeURL with `strict: true` and an full URL with an invalid domain
+### Global defaults
+
+Call `setMakeURLDefaultConfig` once, as early as possible (the entry file of your app), to change the defaults of every call. Each call starts from the base defaults, so pass every setting you want to change:
+
 ~~~ts
-makeURL("example", "/test/a", {
-  config: {
-    strict: true
-  }
-});
-// Throws an error
+setMakeURLDefaultConfig({ trailingSlash: "add", strict: true });
+
+makeURL("example.com", "blog");
+// https://example.com/blog/
 ~~~
 
-#### makeURL with `strict: true` and a relative URL
-~~~ts
-makeURL("test/a", {
-  config: {
-    strict: true
-  }
-});
-// Throws an error
-~~~
+`getMakeURLDefaultConfig` returns a copy of the current defaults, and `BASE_DEFAULT_MAKE_URL_CONFIG` holds the base defaults:
 
-#### makeURL with `strict: true` and an absolute URL
-~~~ts
-makeURL("/test/a", {
-  config: {
-    strict: true
-  }
-});
-// Throws an error
-~~~
-
----
-
-#### makeURL with `strict: false` and an full URL
-~~~ts
-makeURL("example.com", "/test/a", {
-  config: {
-    strict: false
-  }
-});
-// https://example.com/test/a
-~~~
-
-#### makeURL with `strict: false` and an full URL without protocol
-~~~ts
-makeURL("example.com", "/test/a", {
-  config: {
-    strict: false,
-    forceProtocol: "none"
-  }
-});
-// example.com/test/a
-~~~
-
-#### makeURL with `strict: false` and an full URL with an invalid domain
-~~~ts
-makeURL("example", "/test/a", {
-  config: {
-    strict: false
-  }
-});
-// https://example/test/a
-~~~
-
-#### makeURL with `strict: false` and a relative URL
-~~~ts
-makeURL("test/a", {
-  config: {
-    strict: false
-  }
-});
-// test/a
-~~~
-
-#### makeURL with `strict: false` and an absolute URL
-~~~ts
-makeURL("/test/a", {
-  config: {
-    strict: false
-  }
-});
-// /test/a
-~~~
-
-> So, the best and most secure option is to have `strict: true`, but that won't allow you to use relative and absolute URLs. So my advice is to keep `strict: true` globally and disable it in the function calls where you know you need to build relative and/or absolute URLs.
-
----
-
-As we explained, you can set the config by passing a config object as the last item in any `makeURL` call. But if you uses most of the time the same settings, you might prefer to set the config globally and only pass the config object in the `makeURL` calls when you want to override them.
-
-You can achieve it by calling the function `setMakeURLDefaultConfig`.
-> If you want to set the config globally, I recommend you to call this function the earliest you can in your project, so you have the guarantee the global config is set before you call the `makeURL` function. For example, in a Node app, you might want to call it at the beginning of your entry file. In Next.js you might want to call it in the root server layout or in the middleware (if used server-side) or in a root client layout (of used client-side).
-
-The `setMakeURLDefaultConfig` accepts only one parameter with a partial config object (meaning you don't need to set every setting).
-For example:
-### setMakeURLDefaultConfig setting `strict: true` globally
-~~~ts
-setMakeURLDefaultConfig({
-  strict: true
-});
-~~~
-
----
-
-You probably won't ever need to get the current global config, but if you need it, there is a function you can call: `getMakeURLDefaultConfig`:
-### getMakeURLDefaultConfig
 ~~~ts
 getMakeURLDefaultConfig();
 /*
 {
-  forceProtocol: "auto",
-  trailingSlash: "add",
-  strict: false,
-  allowEmptyPathSegments: false
-}
-*/
-~~~
-
-### getMakeURLDefaultConfig after setting `strict: true` globally
-~~~ts
-setMakeURLDefaultConfig({
-  strict: true
-});
-getMakeURLDefaultConfig();
-/*
-{
-  forceProtocol: "auto",
-  trailingSlash: "add",
-  strict: true,
-  allowEmptyPathSegments: false
-}
-*/
-~~~
----
-### About the relative protocol
-Sometimes you might want to build URLs that use the relative protocol (`//`) so you obtain URLs like `//example.com/my/path?test=1`.
-
-Luckily, this module supports building them, just keep in mind these URLs, like the relative and the absolute ones; are <b>not compatible</b> with `strict: true`.
-
-If you have `strict: false`, you can do use them. Here you have some examples:
-#### makeURL with `strict: false` and a relative protocol URL
-~~~ts
-makeURL("//example.com", "test/a", {
-  config: {
-    strict: false
-  }
-});
-// //example.com/test/a
-~~~
-
-#### makeURL with `strict: false` and a relative protocol URL but an invalid domain
-~~~ts
-makeURL("//example", "test/a", {
-  config: {
-    strict: false
-  }
-});
-// /example/test/a <- It is transformed to an absolute URL
-~~~
-
-#### makeURL with `strict: true` and a relative protocol URL
-~~~ts
-makeURL("//example.com", "test/a", {
-  config: {
-    strict: true
-  }
-});
-// Throws an error
-~~~
-
----
-### Full examples
-To finish with this "guide", I want to provide some examples combining several of the explained settings:
-#### Example 1
-~~~ts
-makeURL("example.com/", "/test/:id///edit/", {
-  params: {
-    id: 1,
-    name: "John"
-  },
-  hash: "test",
-  config: {
-    forceProtocol: "auto",
-    trailingSlash: "remove",
-    strict: true,
-    allowEmptyPathSegments: false
-  }
-});
-// https://example.com/test/1/edit?name=John#test
-~~~
-
-#### Example 2
-~~~ts
-// Default global settings set in the entry file
-setMakeURLDefaultConfig({
   forceProtocol: "auto",
   trailingSlash: "remove",
-  strict: true,
-  allowEmptyPathSegments: false
-});
-//
-
-makeURL("https://api.example.com/", "/:id/:param2/:id///", {
-  params: {
-    id: 1,
-    param2: "678"
-  }
-});
-// https://api.example.com/1/678/1
+  strict: false,
+  allowEmptyPathSegments: false,
+  arraySerializer: "repeat"
+}
+*/
 ~~~
+
+## TypeScript
+
+The package includes its type definitions. The types of the options are exported:
+
+~~~ts
+import { makeURL, type IConfig, type MakeURLOptions } from "@nauverse/make-url";
+
+const config: Partial<IConfig> = { trailingSlash: "add" };
+const options: MakeURLOptions = { params: { id: 1 }, config };
+
+makeURL("example.com", "users/:id", options);
+~~~
+
+Exported types: `IConfig`, `IParams`, `MakeURLOptions`, `MakeURLArgs`, `TForceProtocol`, `TTrailingSlash` and `TArraySerializer`.
 
 ## Help
 
 Thank you for using *make-url*!
 
-If you need any help using this library, feel free to [create a GitHub issue](https://github.com/TheNaubit/make-url/issues/new/choose), and ask your questions. I'll try to answer as quickly as possible.
+If you need any help using this library, feel free to [create a GitHub issue](https://github.com/TheNaubit/make-url/issues/new/choose) and ask your questions. I'll try to answer as quickly as possible.
 
 ## Contribute
 
-Contributions of any kind (pull requests, bug reports, feature requests, documentation, design) are more than welcome! If you like this project and want to help, but feel like you are stuck, feel free to contact the maintainers.
+Contributions of any kind (pull requests, bug reports, feature requests, documentation, design) are more than welcome! Read the [contributing guide](./CONTRIBUTING.md) to get started (and [AGENTS.md](./AGENTS.md) if you use a coding agent).
 
-Other features that we still need to implement:
-- We support ports in the URL but we need to also support username and password in the domain like:
-https://myusername:mypassword@domain.com
-
-### Building from source
-
-Building the project should be quick and easy. If it isn't, it's the maintainer's fault. Please report any problems with building in a GitHub issue.
-
-You need to have a reasonably recent version of node.js to build *make-url*. 
-Tested on node version 18.0.0 and npm version 8.6.0.
-
-First, clone the git repository:
-
-```
-git clone git@github.com:TheNaubit/make-url.git
-```
-
-Then switch to the newly created make-url directory and install the dependencies:
-
-```
-cd make-url
-npm install
-```
-
-You can then run the unit tests to verify that everything works correctly:
-
-```
-npm run test:run
-```
-
-And finally, build the library:
-
-```
-npm run build
-```
-
-The output will appear in the `dist` directory.
-
-Happy hacking!
-
-## Contributors ✨
+## Contributors
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):

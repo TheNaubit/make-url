@@ -4,17 +4,15 @@ import {
 	mergeConfig,
 	setMakeURLDefaultConfig,
 } from "./config.js";
-import { encodeDomain, encodeHash, toWellFormed } from "./lib/encode.js";
-import {
-	detectDomainInString,
-	safeStringArrayAssembler,
-} from "./lib/helpers.js";
+import { assembleURL } from "./lib/assemble.js";
+import { encodeDomain, encodeHash, encodeOpaque } from "./lib/encode.js";
+import { detectDomainInString } from "./lib/host.js";
 import {
 	buildPathParamsRegex,
 	encodePathSegmentWithParams,
 } from "./lib/path-params.js";
 import { buildQuery, serializeValue } from "./lib/query.js";
-import type { IConfig, IParams } from "./types.js";
+import type { IConfig, TMakeURLConfig } from "./types.js";
 
 export {
 	BASE_DEFAULT_MAKE_URL_CONFIG,
@@ -23,12 +21,17 @@ export {
 };
 
 /** The optional last argument of `makeURL`. */
-export type MakeURLOptions = Partial<IParams<Partial<IConfig>>>;
+export interface MakeURLOptions {
+	// Replaced in the path as `:<key>`, or added to the query
+	params?: Record<string, unknown> | undefined;
+	hash?: string | undefined;
+	config?: TMakeURLConfig | undefined;
+}
 
-/** The arguments of `makeURL`: at least one string fragment, optionally followed by the options object. */
+/** The arguments of `makeURL`: string fragments (at least one, checked at runtime), optionally followed by the options object. */
 export type MakeURLArgs =
-	| [string, ...Array<string>]
-	| [string, ...Array<string>, MakeURLOptions];
+	| Array<string>
+	| [...Array<string>, MakeURLOptions | undefined];
 
 // Protocols without "//" (the rest of the URL is kept as it is)
 const OPAQUE_PROTOCOL_REGEX = /^(?:mailto|tel|sms|urn|data):/i;
@@ -134,6 +137,54 @@ function buildHash(optionHash: unknown, inlineHash: string): string {
 	return inlineHash !== "" ? `#${encodeHash(inlineHash, true)}` : "";
 }
 
+// The URL without query and hash: protocol, host and path
+function buildBaseURL(
+	fragments: Array<string>,
+	config: IConfig,
+	encodeFragment: (fragment: string) => string,
+): string {
+	const assembled = assembleURL(
+		config.allowEmptyPathSegments
+			? fragments
+			: fragments.filter((fragment) => fragment.trim() !== ""),
+	);
+	const hasHost = assembled.host !== "";
+
+	// The slash right after the host is the separator: "https://example.com/" and "test" give "https://example.com/test"
+	const [firstPathFragment = "", ...otherPathFragments] = assembled.path;
+	const pathFragments =
+		hasHost && firstPathFragment.startsWith("/")
+			? [firstPathFragment.slice(1), ...otherPathFragments].filter(
+					(fragment, index) => index > 0 || fragment !== "",
+				)
+			: assembled.path;
+
+	const protocol = resolveProtocol(
+		assembled.protocol,
+		hasHost,
+		config.forceProtocol,
+	);
+	const host = hasHost
+		? (encodeDomain(assembled.host) ?? encodeFragment(assembled.host))
+		: "";
+
+	const joinedPath = pathFragments.map(encodeFragment).join("/");
+	const collapsedPath = joinedPath.replace(EMPTY_PATH_SEGMENTS_REGEX, "/");
+	// Without empty path segments, the slashes between the host and the path are collapsed too
+	const path = config.allowEmptyPathSegments
+		? joinedPath
+		: hasHost
+			? collapsedPath.replace(/^\/+/, "")
+			: collapsedPath;
+
+	// Without a host, a protocol is followed by the path directly (a forced protocol on "/blog" gives "http://blog")
+	const joined = hasHost
+		? `${protocol}${host}${path === "" ? "" : `/${path}`}`
+		: `${protocol}${protocol === "" ? path : path.replace(/^\/+/, "")}`;
+
+	return applyTrailingSlash(joined, config.trailingSlash);
+}
+
 /**
  * Generates a URL based on the provided fragments and options.
  *
@@ -180,55 +231,10 @@ export default function makeURL(...args: MakeURLArgs): string {
 			)
 			.join("/");
 
-	let url: string;
-
-	if (OPAQUE_PROTOCOL_REGEX.test(inline.fragments[0] ?? "")) {
-		// Like "mailto:me@example.com": no domain, no protocol to add and no slashes to clean
-		url = encodeURI(toWellFormed(inline.fragments.join("/")));
-	} else {
-		const assembled = safeStringArrayAssembler(inline.fragments, config);
-		const detectedProtocol = assembled.hasProtocol
-			? (assembled.array[0] ?? "")
-			: "";
-		const [rawHost, ...pathFragments] = assembled.hasDomain
-			? assembled.array.slice(assembled.hasProtocol ? 1 : 0)
-			: ["", ...assembled.array.slice(assembled.hasProtocol ? 1 : 0)];
-
-		// The slash right after the host is the separator: "https://example.com/" and "test" give "https://example.com/test"
-		const firstPathFragment = pathFragments[0] ?? "";
-		const cleanedPathFragments =
-			assembled.hasDomain && firstPathFragment.startsWith("/")
-				? [firstPathFragment.slice(1), ...pathFragments.slice(1)].filter(
-						(fragment, index) => index > 0 || fragment !== "",
-					)
-				: pathFragments;
-
-		const protocol = resolveProtocol(
-			detectedProtocol,
-			assembled.hasDomain,
-			config.forceProtocol,
-		);
-		const host =
-			rawHost === ""
-				? ""
-				: (encodeDomain(rawHost ?? "") ?? encodeFragment(rawHost ?? ""));
-
-		const joinedPath = cleanedPathFragments.map(encodeFragment).join("/");
-		const collapsedPath = joinedPath.replace(EMPTY_PATH_SEGMENTS_REGEX, "/");
-		// Without empty path segments, the slashes between the host and the path are collapsed too
-		const path = config.allowEmptyPathSegments
-			? joinedPath
-			: host === ""
-				? collapsedPath
-				: collapsedPath.replace(/^\/+/, "");
-
-		// Without a host, a protocol is followed by the path directly (a forced protocol on "/blog" gives "http://blog")
-		const joined =
-			host === ""
-				? `${protocol}${protocol === "" ? path : path.replace(/^\/+/, "")}`
-				: `${protocol}${host}${path === "" ? "" : `/${path}`}`;
-		url = applyTrailingSlash(joined, config.trailingSlash);
-	}
+	const url = OPAQUE_PROTOCOL_REGEX.test(inline.fragments[0] ?? "")
+		? // Like "mailto:me@example.com": no host, no protocol to add and no slashes to clean
+			inline.fragments.map(encodeOpaque).join("/")
+		: buildBaseURL(inline.fragments, config, encodeFragment);
 
 	const query = buildQuery(
 		inline.query,

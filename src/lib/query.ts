@@ -1,4 +1,5 @@
 import type { TArraySerializer } from "../types.js";
+import { encodeInlineQuery } from "./encode.js";
 
 /**
  * Converts a param value to a string. `undefined` and `null` mean "no value" and return null.
@@ -48,7 +49,7 @@ export function serializeArray(
 /**
  * Builds the query string of the URL.
  *
- * @param inlineQuery - The query written in the fragments (like "?page=2"), without the "?". It comes first.
+ * @param inlineQuery - The query written in the last fragment (like "?page=2"), without the "?". It is kept as written and comes first.
  * @param params - The params that were not replaced in the path.
  * @param serializer - How arrays are serialized.
  * @returns The query string, without the "?".
@@ -58,7 +59,7 @@ export function buildQuery(
 	params: ReadonlyArray<[string, unknown]>,
 	serializer: TArraySerializer,
 ): string {
-	const searchParams = new URLSearchParams(inlineQuery);
+	const searchParams = new URLSearchParams();
 
 	for (const [key, value] of params) {
 		const values = Array.isArray(value)
@@ -70,5 +71,8 @@ export function buildQuery(
 		}
 	}
 
-	return searchParams.toString();
+	// The query written in the fragment is kept as it is, the params are added after it
+	return [encodeInlineQuery(inlineQuery), searchParams.toString()]
+		.filter((part) => part !== "")
+		.join("&");
 }

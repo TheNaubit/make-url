@@ -1,4 +1,4 @@
-import type { IConfig } from "./types.js";
+import type { IConfig, TMakeURLConfig } from "./types.js";
 
 export const BASE_DEFAULT_MAKE_URL_CONFIG: Readonly<IConfig> = Object.freeze({
 	forceProtocol: "auto",
@@ -19,12 +19,15 @@ let currentDefaultConfig: IConfig = { ...BASE_DEFAULT_MAKE_URL_CONFIG };
  */
 export function mergeConfig(
 	base: Readonly<IConfig>,
-	override: Partial<IConfig> | undefined,
+	override: TMakeURLConfig | undefined,
 ): IConfig {
 	const definedEntries = Object.entries(override ?? {}).filter(
 		([, value]) => value !== undefined,
 	);
-	return { ...base, ...Object.fromEntries(definedEntries) };
+	return {
+		...base,
+		...(Object.fromEntries(definedEntries) as Partial<IConfig>),
+	};
 }
 
 /**
@@ -47,6 +50,6 @@ export function getMakeURLDefaultConfig(): IConfig {
  *   strict: false
  * })
  */
-export function setMakeURLDefaultConfig(config: Partial<IConfig>): void {
+export function setMakeURLDefaultConfig(config: TMakeURLConfig): void {
 	currentDefaultConfig = mergeConfig(BASE_DEFAULT_MAKE_URL_CONFIG, config);
 }

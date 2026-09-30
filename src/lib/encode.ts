@@ -32,6 +32,25 @@ export function encodePathSegment(segment: string): string {
 }
 
 /**
+ * Encodes a fragment of a URL with an opaque protocol (like "mailto:me@example.com"): reserved characters like ":" and "@" are kept, "?" and "#" are encoded (the query and the hash are handled separately) and existing percent-escapes are not encoded again.
+ */
+export function encodeOpaque(fragment: string): string {
+	return encodeURI(toWellFormed(fragment))
+		.replace(DOUBLE_ENCODED_ESCAPE_REGEX, "%$1")
+		.replace(/\?/g, "%3F")
+		.replace(/#/g, "%23");
+}
+
+/**
+ * Encodes the query written in a fragment ("a=1&b=2"): it is kept as written, only characters that are not valid in a query are encoded (existing percent-escapes are kept).
+ */
+export function encodeInlineQuery(query: string): string {
+	return encodeURI(toWellFormed(query))
+		.replace(DOUBLE_ENCODED_ESCAPE_REGEX, "%$1")
+		.replace(/#/g, "%23");
+}
+
+/**
  * Encodes a URL hash. "/", "?", ":" and "@" are kept since they are valid in a hash (and used by client-side routers, like "#/users/1?tab=a").
  *
  * @param hash - The hash, without the leading "#".
@@ -66,7 +85,7 @@ export function encodeDomain(domain: string): string | null {
 	const credentials =
 		atIndex === -1
 			? ""
-			: `${domain.slice(0, atIndex).split(":").map(encodeValue).join(":")}@`;
+			: `${domain.slice(0, atIndex).split(":").map(encodePathSegment).join(":")}@`;
 
 	try {
 		return `${credentials}${new URL(`https://${toWellFormed(domain.slice(atIndex + 1))}`).host}`;
