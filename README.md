@@ -30,6 +30,7 @@
   <a href="#guide">Guide</a> •
   <a href="#configuration">Configuration</a> •
   <a href="#typescript">TypeScript</a> •
+  <a href="#upgrading-from-1x">Upgrading from 1.x</a> •
   <a href="#help">Help</a> •
   <a href="#contribute">Contribute</a>
 </p>
@@ -74,7 +75,7 @@ makeURL("https://api.example.com/", "/users/:id/posts", {
 
 ### make-url vs urlcat and url-join
 
-make-url was inspired by [urlcat](https://www.npmjs.com/package/urlcat), and it covers more cases with a smaller bundle. Every output below was produced by running both libraries (urlcat 3.1.0, url-join 5.0.0, make-url 1.x):
+make-url was inspired by [urlcat](https://www.npmjs.com/package/urlcat), and it covers more cases with a smaller bundle. Every output below was produced by running the three libraries (urlcat 3.1.0, url-join 5.0.0, make-url 2.0.0):
 
 | Case | urlcat | url-join | make-url |
 | ---- | ------ | -------- | -------- |
@@ -436,6 +437,21 @@ makeURL("example.com", "users/:id", options);
 ~~~
 
 Exported types: `IConfig`, `IParams`, `MakeURLOptions`, `MakeURLArgs`, `TForceProtocol`, `TTrailingSlash` and `TArraySerializer`.
+
+## Upgrading from 1.x
+
+Version 2 fixes many wrong URLs, so some results change. Check these cases in your code:
+
+- Node.js 22 or later is required.
+- `undefined` and `null` params are skipped (they were added as `"undefined"` and `"null"`), and dates are sent as ISO strings (they were quoted JSON).
+- `localhost`, IPv6 hosts (`[::1]`) and international domains are detected as hosts, so `forceProtocol: "auto"` adds `https://` to them. Use `"auto-insecure"` or write `http://` for local servers.
+- Relative paths (`./page`, `../page`) and file names (`index.html`, `data.json`) are no longer taken as domains, so no protocol is added to them.
+- A query or hash written in the last fragment (`"search?q=1"`, `"page#top"`) is kept instead of being encoded.
+- The hash keeps `/`, `?`, `:` and `@`, and a leading `#` is ignored.
+- Any `protocol://` (like `wss://` or `myapp://`) is kept, and `mailto:`, `tel:`, `sms:`, `urn:` and `data:` URLs are supported.
+- With `trailingSlash: "remove"` (the default), the slash after a host alone is removed too (`https://example.com/` gives `https://example.com`).
+- `getMakeURLDefaultConfig` returns a copy, and `BASE_DEFAULT_MAKE_URL_CONFIG` is frozen.
+- The types are stricter: the options object can only be the last argument.
 
 ## Help
 
