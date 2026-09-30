@@ -446,6 +446,7 @@ Version 2 fixes many wrong URLs, so some results change. Check these cases in yo
 - `undefined` and `null` params are skipped (they were added as `"undefined"` and `"null"`), and dates are sent as ISO strings (they were quoted JSON).
 - `localhost`, IPv6 hosts (`[::1]`) and international domains are detected as hosts, so `forceProtocol: "auto"` adds `https://` to them. Use `"auto-insecure"` or write `http://` for local servers.
 - Relative paths (`./page`, `../page`) and file names (`index.html`, `data.json`) are no longer taken as domains, so no protocol is added to them.
+- A URL without host never starts with `//`, and a first path segment that looks like a protocol has its `:` encoded (`"javascript:alert(1)"` gives `javascript%3Aalert(1)`), so path fragments and params can never create a link to another host.
 - A query or hash written in the last fragment (`"search?q=1"`, `"page#top"`) is kept instead of being encoded.
 - The hash keeps `/`, `?`, `:` and `@`, and a leading `#` is ignored.
 - Any `protocol://` (like `wss://` or `myapp://`) is kept, and `mailto:`, `tel:`, `sms:`, `urn:` and `data:` URLs are supported.

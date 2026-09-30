@@ -36,8 +36,14 @@ export type MakeURLArgs =
 // Protocols without "//" (the rest of the URL is kept as it is)
 const OPAQUE_PROTOCOL_REGEX = /^(?:mailto|tel|sms|urn|data):/i;
 
-// Two or more slashes, except the ones after a ":" (like a URL inside the path: "redirect/https://example.com")
-const EMPTY_PATH_SEGMENTS_REGEX = /(?<!:)\/{2,}/g;
+// Two or more slashes, except a run right after a ":" (a URL inside the path: "redirect/https://example.com" or "file:///etc")
+const EMPTY_PATH_SEGMENTS_REGEX = /(?<![:/])\/{2,}/g;
+
+// A first path segment that looks like a protocol ("https:" + "/evil.com", "javascript:alert(1)")
+const PATH_PROTOCOL_REGEX = /^([a-z][a-z0-9+.-]*):(\/*)/i;
+
+// A complete URL: a protocol followed by "//"
+const COMPLETE_URL_REGEX = /^[a-z][a-z0-9+.-]*:\/\//i;
 
 interface IParsedArgs {
 	fragments: Array<string>;
@@ -143,13 +149,35 @@ function buildHash(optionHash: unknown, inlineHash: string): string {
 	return inlineHash !== "" ? `#${encodeHash(inlineHash, true)}` : "";
 }
 
+// The path of a URL without host: it can never create a host out of path fragments or params
+function pathWithoutHost(protocol: string, path: string): string {
+	// "file://" is followed by an absolute path
+	if (protocol.toLowerCase() === "file://") {
+		return `/${path.replace(/^\/+/, "")}`;
+	}
+	// A protocol is followed by the path directly (a forced protocol on "/blog" gives "http://blog")
+	if (protocol !== "") return path.replace(/^\/+/, "");
+
+	// Without protocol, "//" would make the path a protocol-relative URL ("" + "/evil.com" is not a link to evil.com), and a first segment like "https:" would be read as a protocol (RFC 3986, section 4.2), so its ":" is encoded
+	return path
+		.replace(/^\/{2,}/, "/")
+		.replace(
+			PATH_PROTOCOL_REGEX,
+			(_, name: string, slashes: string) =>
+				`${name}%3A${slashes === "" ? "" : "/"}`,
+		);
+}
+
 // A URL with an opaque protocol ("mailto:", "tel:") without query and hash
 function buildOpaqueURL(
 	fragments: Array<string>,
 	config: IConfig,
 	encodeFragment: (fragment: string) => string,
 ): string {
-	const joined = fragments.map(encodeFragment).join("/");
+	const joined = fragments
+		.filter((fragment) => fragment.trim() !== "")
+		.map(encodeFragment)
+		.join("/");
 	return config.allowEmptyPathSegments
 		? joined
 		: joined.replace(EMPTY_PATH_SEGMENTS_REGEX, "/");
@@ -195,10 +223,9 @@ function buildBaseURL(
 			? collapsedPath.replace(/^\/+/, "")
 			: collapsedPath;
 
-	// Without a host, a protocol is followed by the path directly (a forced protocol on "/blog" gives "http://blog")
 	const joined = hasHost
 		? `${protocol}${host}${path === "" ? "" : `/${path}`}`
-		: `${protocol}${protocol === "" ? path : path.replace(/^\/+/, protocol.toLowerCase() === "file://" ? "/" : "")}`;
+		: `${protocol}${pathWithoutHost(protocol, path)}`;
 
 	return applyTrailingSlash(joined, config.trailingSlash);
 }
@@ -270,7 +297,13 @@ export default function makeURL(...args: MakeURLArgs): string {
 	const fullURL = `${url}${query === "" ? "" : `?${query}`}${buildHash(options.hash, inline.hash)}`;
 
 	// In strict mode the URL must be a complete URL with a valid domain
-	if (config.strict && !detectDomainInString(fullURL).hasDomain) {
+	if (
+		config.strict &&
+		!(
+			COMPLETE_URL_REGEX.test(fullURL) &&
+			detectDomainInString(fullURL).hasDomain
+		)
+	) {
 		throw new Error(`The generated URL is not valid: ${fullURL}`);
 	}
 

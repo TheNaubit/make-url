@@ -36,7 +36,7 @@ src/
 ## Hard rules
 
 1. **Steps run in this order**: parse arguments, split the inline query and hash of the last fragment, reassemble protocol and domain, encode the path and replace params, collapse slashes, trailing slash, query, hash, strict check. Slash cleanup must run after the params are replaced.
-2. **Params are only replaced in the path**, never in the protocol, the host, the credentials or the port.
+2. **Params are only replaced in the path**, never in the protocol, the host, the credentials or the port. A URL without host can never gain one from path fragments or params: its path never starts with "//", and a first segment that looks like a protocol ("https:", "javascript:") has its ":" encoded (RFC 3986, section 4.2).
 3. **The host is never percent-encoded.** International domains become punycode (`encodeDomain`), credentials are percent-encoded.
 4. **Literal fragments keep existing `%XX` escapes and `:`**. Values (params and the hash option) are fully encoded.
 5. **`makeURL` never throws on string input** unless `strict` is on or the arguments are invalid (no leading string, options not last).

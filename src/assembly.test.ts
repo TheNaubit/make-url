@@ -178,3 +178,56 @@ describe("file protocol", () => {
 		);
 	});
 });
+
+describe("no protocol-relative URL out of paths", () => {
+	const config = { allowEmptyPathSegments: true };
+
+	it("never starts a path without host with '//'", () => {
+		expect(makeURL("", "/api/users", { config })).toBe("/api/users");
+		expect(makeURL("/", "api", { config })).toBe("/api");
+		expect(makeURL("/", ":to", { params: { to: "evil.com" }, config })).toBe(
+			"/evil.com",
+		);
+	});
+
+	it("never builds a scheme and host out of path fragments", () => {
+		expect(makeURL("https:", "/evil.com")).toBe("https%3A/evil.com");
+		expect(makeURL("https:/", ":h", { params: { h: "evil.com" } })).toBe(
+			"https%3A/evil.com",
+		);
+		expect(makeURL("javascript:alert(1)")).toBe("javascript%3Aalert(1)");
+		expect(() =>
+			makeURL("https:/", ":h", {
+				params: { h: "evil.com" },
+				config: { strict: true },
+			}),
+		).toThrow("The generated URL is not valid");
+	});
+});
+
+describe("opaque protocols and empty fragments", () => {
+	it("does not add a slash for empty or inline-only fragments", () => {
+		expect(makeURL("mailto:me@example.com", "?subject=Hi")).toBe(
+			"mailto:me@example.com?subject=Hi",
+		);
+		expect(makeURL("mailto:me@example.com", "#x")).toBe(
+			"mailto:me@example.com#x",
+		);
+		expect(makeURL("mailto:me@example.com", "")).toBe("mailto:me@example.com");
+	});
+});
+
+describe("file protocol paths", () => {
+	it("never takes a fragment as the host", () => {
+		expect(makeURL("file://", "tmp", "x")).toBe("file:///tmp/x");
+		expect(makeURL("file://", ":p", { params: { p: "evil" } })).toBe(
+			"file:///evil",
+		);
+	});
+
+	it("keeps a file URL inside the path", () => {
+		expect(makeURL("https://example.com", "redirect", "file:///etc")).toBe(
+			"https://example.com/redirect/file:///etc",
+		);
+	});
+});
