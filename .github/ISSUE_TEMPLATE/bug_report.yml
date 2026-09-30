@@ -1,0 +1,36 @@
+name: Bug report
+description: A URL is not built as documented
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      placeholder: "1.11.0"
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: The makeURL call
+      description: The exact call, including the options object and any setMakeURLDefaultConfig call.
+      render: ts
+    validations:
+      required: true
+  - type: input
+    id: actual
+    attributes:
+      label: Actual URL
+    validations:
+      required: true
+  - type: input
+    id: expected
+    attributes:
+      label: Expected URL
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Runtime
+      placeholder: "Node.js 24.21, Chrome 140, Bun 1.3"

@@ -1,38 +1,28 @@
-## Contribute
+# Contributing
 
-Contributions of any kind (pull requests, bug reports, feature requests, documentation, design) are more than welcome! If you like this project and want to help, but feel like you are stuck, feel free to contact the maintainer.
+Contributions of any kind (pull requests, bug reports, feature requests, documentation, design) are more than welcome! This package is small, so keep changes small and focused.
 
-### Building from source
+## Setup
 
-Building the project should be quick and easy. If it isn't, it's the maintainer's fault. Please report any problems with building in a GitHub issue.
+You need Node.js `^22.14.0 || >=24.10.0` (run `nvm use` for the version in `.nvmrc`) and npm `>=10.9.0`.
 
-You need to have a reasonably recent version of node.js to build *make-url*. My node version is 18.0.0 and npm version 8.6.0.
-
-First, clone the git repository:
-
-```
+```bash
 git clone git@github.com:TheNaubit/make-url.git
-```
-
-Then switch to the newly created make-url directory and install the dependencies:
-
-```
 cd make-url
 npm install
-```
-
-You can then run the unit tests to verify that everything works correctly:
-
-```
-npm run test:run
-```
-
-And finally, build the library:
-
-```
+npm run lint
+npm run typecheck
+npm run test:coverage
 npm run build
 ```
 
-The output will appear in the `dist` directory.
+The build output goes to `dist/`.
 
-Happy hacking!
+## Rules
+
+- Write the failing test first. Every bug fix needs a regression test.
+- The README examples are tests (`src/readme.test.ts`): update them when behavior changes.
+- Use [Conventional Commits](https://www.conventionalcommits.org): `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `chore:`. A git hook checks the messages, and another one runs the linter, the type check and the tests before each commit.
+- Do not bump `version` by hand. Releases are automated with semantic-release: every push to `main` runs `.github/workflows/release.yml`, which computes the version, updates `CHANGELOG.md`, tags, creates the GitHub release and publishes to npm with [trusted publishing](https://docs.npmjs.com/trusted-publishers).
+
+See [AGENTS.md](./AGENTS.md) for the architecture notes.

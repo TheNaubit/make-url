@@ -1,6 +1,6 @@
 {
   "name": "@nauverse/make-url",
-  "description": "\ud83e\ude84 A tiny URL builder library for TypeScript.",
+  "description": "A tiny, dependency-free URL builder for TypeScript and JavaScript: path params, query params, hash, protocols and slashes handled for you.",
   "author": {
     "name": "Albert Adler | @albertadler",
     "url": "https://albertadler.com"
