@@ -36,4 +36,6 @@ export interface IDomainData {
 
 export interface IURLArrayData extends IProtocolData {
 	array: Array<string>;
+	// Whether the array contains a domain: it is then the first fragment after the protocol (if any)
+	hasDomain: boolean;
 }

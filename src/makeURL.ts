@@ -1,9 +1,23 @@
 import {
 	detectDomainInString,
+	encodeDomain,
 	safeStringArrayAssembler,
 	safeStringArrayToURLString,
 } from "./lib/helpers.js";
 import type { IConfig, IParams } from "./types.js";
+
+// The protocol, host and port of a URL: "https://example.com:8080" or "//example.com"
+const ORIGIN_REGEX = /^(?:[a-z][a-z0-9+.-]*:)?\/\/[^/?#]*/i;
+
+function escapeRegExp(value: string): string {
+	return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Split a URL into its origin (protocol, host and port, when present) and the rest
+function splitOrigin(url: string): [string, string] {
+	const origin = ORIGIN_REGEX.exec(url)?.[0] ?? "";
+	return [origin, url.slice(origin.length)];
+}
 
 export const BASE_DEFAULT_MAKE_URL_CONFIG: IConfig = {
 	forceProtocol: "auto",
@@ -28,7 +42,8 @@ let SET_CONFIG: IConfig = {
  * @returns The default configuration object.
  */
 export function getMakeURLDefaultConfig(): IConfig {
-	return SET_CONFIG;
+	// Return a copy so the default config can only be changed with setMakeURLDefaultConfig
+	return { ...SET_CONFIG };
 }
 
 /**
@@ -120,6 +135,13 @@ export default function makeURL(
 			if (index === 0 && safeStringArrayAssemblerData.hasProtocol) {
 				// Since it is a protocol, we can just return it as is
 				return fragment;
+			}
+
+			// The domain is not percent-encoded (that is not valid in a host): international domains are converted to punycode
+			const domainIndex = safeStringArrayAssemblerData.hasProtocol ? 1 : 0;
+			if (index === domainIndex && safeStringArrayAssemblerData.hasDomain) {
+				const encodedDomain = encodeDomain(fragment);
+				if (encodedDomain !== null) return encodedDomain;
 			}
 
 			// Since it does not contain a protocol, we need to clean it
@@ -223,8 +245,14 @@ export default function makeURL(
 		}
 	> = {};
 
-	for (const entry of Object.entries(safeParams.params)) {
+	for (const entry of Object.entries(safeParams.params ?? {})) {
 		const [key, value] = entry;
+
+		// undefined and null mean "no value", so the param is not added
+		if (value === undefined || value === null) {
+			continue;
+		}
+
 		// We need to safe cast the value to a string, it could be anything: a string, a number, an object, etc... so sometimes the .toString() method will not work as expected
 		let safeValue: string | Array<string> = "";
 		let isValueArray = false;
@@ -244,6 +272,10 @@ export default function makeURL(
 				// If the arraySerializer is set to "comma", we need to join the array with a comma
 				safeValue = value.join(",");
 			}
+		} else if (value instanceof Date) {
+			safeValue = Number.isNaN(value.getTime())
+				? String(value)
+				: value.toISOString();
 		} else if (typeof value === "object") {
 			safeValue = JSON.stringify(value);
 		} else {
@@ -281,13 +313,16 @@ export default function makeURL(
 		// We need to replace it in all the cases it appears in the URL, so we use a regex with the global flag
 		// If we found any match, we set the foundAnyMatch variable to true
 		// If we didn't find any match, we don't do anything
-		const regex = new RegExp(`:${key}`, "g");
+		// The key is escaped (it could contain regular expression characters) and must not be followed by a word character, so ":id" does not match the start of ":identifier"
+		const regex = new RegExp(`:${escapeRegExp(key)}(?![A-Za-z0-9_])`, "g");
 		const encodedValue = encodeURIComponent(item.value as string); // We know that is .isArray is false (which we already checked), the value type is always a string
 
-		url = url.replace(regex, () => {
+		// The protocol, host and port are never replaced (a param named "8080" must not replace the port)
+		const [origin, path] = splitOrigin(url);
+		url = `${origin}${path.replace(regex, () => {
 			foundAnyMatch = true;
 			return encodedValue;
-		});
+		})}`;
 
 		if (foundAnyMatch) {
 			// We remove the key from the queryParams object
@@ -308,7 +343,10 @@ export default function makeURL(
 
 	// Now we have to add the hash params to the URL
 	// Add the hash params to the URL if there are any
-	const safeHashParamValue: string = safeParams.hash.trim();
+	// A leading "#" is ignored, since it is added anyway
+	const safeHashParamValue: string = (safeParams.hash ?? "")
+		.trim()
+		.replace(/^#/, "");
 	if (safeHashParamValue !== "") {
 		url += `#${encodeURIComponent(safeHashParamValue)}`;
 	}

@@ -5,6 +5,35 @@ import type {
 	IURLArrayData,
 } from "../types.js";
 
+// A fragment that starts with a port, like ":8080" or ":8080/path"
+const PORT_FRAGMENT_REGEX = /^:\d+(?:[/?#]|$)/;
+
+// Only ASCII characters
+const ASCII_REGEX = /^[\x20-\x7e]*$/;
+
+/**
+ * Encodes a domain (with an optional port) for a URL: international domains are converted to punycode (ASCII), since percent-encoding is not valid in a host.
+ *
+ * @param domain - The domain, with an optional port.
+ * @returns The encoded domain, or null if it is not a valid domain.
+ * @example
+ * encodeDomain("münchen.de:8080");
+ * // => "xn--mnchen-3ya.de:8080"
+ */
+export function encodeDomain(domain: string): string | null {
+	// ASCII domains are kept as they are (including their case)
+	if (ASCII_REGEX.test(domain)) return domain;
+
+	try {
+		return new URL(`https://${domain}`).host;
+	} catch {
+		return null;
+	}
+}
+
+// The end of the host (and port) in a URL without protocol
+const HOST_END_REGEX = /[/?#]/;
+
 /**
  * Detects the domain in a given string.
  *
@@ -108,36 +137,14 @@ function getUnsafeMergedURLString(
 			// We could join using the `.join`method, but we need more control
 			// over how to join, so we use the `.map` method
 			.map((v, index) => {
-				// If it is the first item or if it contains a dot (potentially a part of the domain), we don't join with "/"
-				// We also make sure to support the : character, since it could be part of the domain (the port)
-				// TODO: Support fragmented strings with the port splitted like:
-				/*
-				const url = makeURL(
-					"https://example.com:",
-					"12345",
-					"path",
-					"to",
-					"resource",
-				);
-				*/
-				// Right now it supports ports like:
-				/*
-				const url = makeURL(
-					"https://example.com",
-					":12345",
-					"path",
-					"to",
-					"resource",
-				);
-				*/
-				// and
-				/*
-				const url = makeURL("https://example.com:12345", "path", "to", "resource");
-				*/
-				if (index === 0 || v.startsWith(".") || v.includes(":")) return v;
+				// If it is the first item or if it starts with a dot (potentially a part of the domain), we don't join with "/"
+				// A fragment starting with ":" and a number is the port (like ":12345"), so it is not joined with "/" either
+				// Any other ":" is a URL param (like "users/:id") and must be joined with "/"
+				// Ports split like makeURL("https://example.com:", "12345") are not supported
+				if (index === 0 || v.startsWith(".") || PORT_FRAGMENT_REGEX.test(v))
+					return v;
 				// Anything else is joined with "/"
-				// biome-ignore lint/style/noUselessElse: We need the else statement to return the value
-				else return `/${v}`;
+				return `/${v}`;
 			})
 			// Previously I said "join", but it was more like modifying the fragment so we could just concatenate the array without any separator
 			.join("")
@@ -210,7 +217,7 @@ function extractProtocolFromArray(
  *
  * @param array - The array of URL fragments.
  * @param hasProtocolExtracted - A boolean indicating whether the protocol has been extracted from the URL.
- * @returns An array of URL fragments with the domain extracted.
+ * @returns The array of URL fragments with the domain extracted, and whether a domain was found.
  * @example
  * extractDomainFromArray(["https://", "example", "", ".com", "blog"], true);
  * // => ["https://", "example.com", "blog"]
@@ -220,7 +227,7 @@ function extractProtocolFromArray(
 function extractDomainFromArray(
 	array: Array<string>,
 	hasProtocolExtracted: boolean,
-): Array<string> {
+): { array: Array<string>; hasDomain: boolean } {
 	// We need to generate a temporary URL to detect the domain
 	// This generated URL is not really safe, meaning it could contain
 	// unescaped character, wrong protocols, etc. But we don't care about that, since we only need it to detect the domain
@@ -232,11 +239,12 @@ function extractDomainFromArray(
 	const domainData = detectDomainInString(`https://${tempURL}`);
 
 	// If the URL does not contain a domain, there is nothing to "extract"/"sort", so we return the array as is
-	if (!domainData.hasDomain) return array;
+	if (!domainData.hasDomain) return { array, hasDomain: false };
 
-	// if it contains a domain, we find the index position of the last character of the domain
-	const domainIndex =
-		tempURL.indexOf(domainData.domain) + domainData.domain.length;
+	// If it contains a domain, the domain (and its port) ends at the first "/", "?" or "#" of the temporary URL
+	// We do not search the detected domain in the string since the URL API normalizes it (lowercase, punycode for international domains)
+	const hostEndMatch = HOST_END_REGEX.exec(tempURL);
+	const domainIndex = hostEndMatch ? hostEndMatch.index : tempURL.length;
 
 	// We need to create an array with the domain fragments but without the protocol (if it has one)
 	const safeArray = array.slice(hasProtocolExtracted ? 1 : 0);
@@ -308,7 +316,7 @@ function extractDomainFromArray(
 		returnedFragments = [array[0], ...returnedFragments];
 	}
 
-	return returnedFragments;
+	return { array: returnedFragments, hasDomain: true };
 }
 
 /**
@@ -344,9 +352,14 @@ export function safeStringArrayAssembler(
 
 	// Now we need to detect if it contains a protocol
 	const potentiallyWrongJoinedURL = filteredFragments.join(""); // We don't use here the getUnsafeMergedURLString function because it would fail, since it requires to have already detected the protocol
-	const { hasProtocol, protocol } = detectProtocolInString(
-		potentiallyWrongJoinedURL,
-	);
+	const { protocol, hasProtocol: hasProtocolInJoinedURL } =
+		detectProtocolInString(potentiallyWrongJoinedURL);
+
+	// A relative protocol is only valid with a domain. Joining without separators could merge the port with the path ("example.com:8080" and "x" into "example.com:8080x"), so the domain is checked with the fragments joined with "/"
+	const hasProtocol =
+		protocol === "relative"
+			? detectProtocolInString(filteredFragments.join("/")).hasProtocol
+			: hasProtocolInJoinedURL;
 
 	// We need to join all the fragments until the end of the protocol (if it has one)
 	let returnedFragments: Array<string> = filteredFragments;
@@ -373,12 +386,13 @@ export function safeStringArrayAssembler(
 	}
 
 	// No matter if there is protocol or not, we need to check if there is a domain, and if there is one, we need to sort and merge items in the array so the domain is a single fragment in the first position (if there is no protocol) or in the second position (if there is a protocol)
-	returnedFragments = extractDomainFromArray(returnedFragments, hasProtocol);
+	const domainData = extractDomainFromArray(returnedFragments, hasProtocol);
 
 	return {
-		array: returnedFragments,
+		array: domainData.array,
 		hasProtocol,
 		protocol,
+		hasDomain: domainData.hasDomain,
 	};
 }
 
