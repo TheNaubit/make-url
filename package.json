@@ -67,6 +67,7 @@
     "@semantic-release/git": "10.0.1",
     "@types/node": "24.19.0",
     "@vitest/coverage-v8": "5.0.2",
+    "conventional-commits-filter": "6.0.1",
     "husky": "9.1.7",
     "semantic-release": "25.0.9",
     "typescript": "7.0.2",

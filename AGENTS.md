@@ -62,6 +62,8 @@ src/
 
 ## Gotchas
 
+- `conventional-commits-filter` is a pinned dev dependency on purpose: `@conventional-changelog/git-client` (from commitlint) has an optional peer dependency on version 6, and without it npm 11 may hoist version 5 (from semantic-release) and write a lock file that `npm ci` on npm 10 (Node.js 22) rejects. After changing dependencies, check that `npm ls --all` reports no invalid package.
+
 - `@semantic-release/changelog` 7 and `@semantic-release/git` 11 need Node.js 24.15 or later. They are pinned to 6.0.3 and 10.0.1 (same features) so that contributors on older Node.js 24 releases can install.
 - Tags up to `v1.10.17` were created by the previous release tool (annotated tags). semantic-release reads them fine for versioning.
 - Only http, https, ws, wss and ftp can be split across fragments ("https:" + "//x.com"). Other protocols, and the relative protocol "//", must be in one fragment, so "redirect" + "https://other.com" stays a path and "/" + "/evil.com" is not a link to evil.com.
