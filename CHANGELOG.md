@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/TheNaubit/make-url/compare/v2.0.0...v2.0.1) (2026-11-08)
+
+
+### Bug Fixes
+
+* update dependencies to resolve security advisories ([357e0fd](https://github.com/TheNaubit/make-url/commit/357e0fd8e76f7aa3ffefa9910b038c372e31364a))
+
 # [2.0.0](https://github.com/TheNaubit/make-url/compare/v1.10.17...v2.0.0) (2026-09-30)
 
 
