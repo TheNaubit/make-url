@@ -60,7 +60,7 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.6",
+    "@biomejs/biome": "2.6.8",
     "@commitlint/cli": "21.2.4",
     "@commitlint/config-conventional": "21.2.4",
     "@semantic-release/changelog": "6.0.3",
@@ -71,7 +71,7 @@
     "husky": "9.1.7",
     "semantic-release": "25.0.9",
     "typescript": "7.0.2",
-    "vite": "8.3.6",
+    "vite": "8.3.8",
     "vitest": "5.1.0"
   },
   "devEngines": {
